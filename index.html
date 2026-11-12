@@ -177,6 +177,16 @@ footer p{margin:4px 0}
 .ai-plan .rev{font-family:Georgia,serif;font-weight:600}
 .ai-essay{margin:8px 0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff}
 .ai-essay pre{white-space:pre-wrap;font:13.5px/1.8 Georgia,serif;margin:0;color:var(--ink)}
+.ai-chat{margin-top:18px;border-top:1px dashed var(--line);padding-top:14px}
+.ai-msgs{display:flex;flex-direction:column;gap:8px;margin:8px 0 10px;max-height:320px;overflow:auto}
+.ai-msg{max-width:88%;padding:8px 12px;border-radius:12px;font-size:13.5px;line-height:1.75;white-space:pre-wrap}
+.ai-msg.u{align-self:flex-end;background:var(--green-soft);color:var(--ink)}
+.ai-msg.a{align-self:flex-start;background:#fff;border:1px solid var(--line)}
+.ai-q{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:9px 12px;
+  font:14px/1.5 inherit;font-family:inherit;background:#fff;color:var(--ink)}
+.ai-chipbtn{border:1px solid var(--line);background:var(--paper);color:var(--sub);border-radius:99px;
+  padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+.ai-chipbtn:hover{border-color:var(--green);color:var(--green)}
 .ai-photo{display:flex;gap:10px;align-items:flex-start;margin-top:10px;flex-wrap:wrap}
 .ai-photo figure{margin:0;text-align:center}
 .ai-photo figcaption{font-size:11px;color:var(--sub);margin-top:4px}
@@ -375,6 +385,19 @@ footer p{margin:4px 0}
         <div class="ai-row"><button class="btn sm plain" type="button" id="aiSave">保存</button></div>
       </div>
       <div class="ai-result" id="aiResult" hidden></div>
+      <div class="ai-chat" id="aiChat" hidden>
+        <p class="ai-h">继续追问</p>
+        <div class="ai-msgs" id="aiMsgs"></div>
+        <div class="ai-row">
+          <input class="ai-q" id="aiQ" type="text" placeholder="比如：这篇怎么改？还有哪些建议？">
+          <button class="btn primary" type="button" id="aiSend">发送</button>
+        </div>
+        <div class="ai-row">
+          <button class="ai-chipbtn" type="button">这篇怎么改？</button>
+          <button class="ai-chipbtn" type="button">还有哪些建议？</button>
+          <button class="ai-chipbtn" type="button">把最差的一段重写</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1171,6 +1194,7 @@ panels.addEventListener('click', e => {
 
     goBtn.disabled = true; goBtn.textContent = '批改中…'; stateEl.textContent = '';
     resultEl.hidden = true;
+    chatBox.hidden = true; chatCtx = null; chatHistory = []; msgsEl.innerHTML = '';
     try{
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -1180,6 +1204,15 @@ panels.addEventListener('click', e => {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || ('接口返回 ' + res.status));
       render(data);
+      chatCtx = {
+        type: typeEl.value,
+        essayText: (data.transcript || essay || '').trim(),
+        promptText: (data.prompt_transcript || '').trim(),
+        grade: { score: data.score, band: data.band, issues: data.issues || [], deductions: data.deductions || [] }
+      };
+      chatHistory = [];
+      msgsEl.innerHTML = '';
+      chatBox.hidden = false;
       stateEl.textContent = '';
     }catch(err){
       stateEl.textContent = '批改失败：' + err.message;
@@ -1187,6 +1220,52 @@ panels.addEventListener('click', e => {
       goBtn.disabled = false; goBtn.textContent = '开始批改';
     }
   }
+
+  /* ---------- 继续追问 ---------- */
+  const chatBox = document.getElementById('aiChat');
+  const msgsEl = document.getElementById('aiMsgs');
+  const qEl = document.getElementById('aiQ');
+  const sendBtn = document.getElementById('aiSend');
+  let chatCtx = null, chatHistory = [], chatting = false;
+
+  function addMsg(role, text){
+    const div = document.createElement('div');
+    div.className = 'ai-msg ' + (role === 'user' ? 'u' : 'a');
+    div.textContent = text;
+    msgsEl.appendChild(div);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+
+  async function ask(q){
+    const endpoint = (localStorage.getItem('ai_endpoint') || '').trim();
+    const code = (localStorage.getItem('ai_code') || '').trim();
+    const question = (q || '').trim();
+    if (!endpoint || !chatCtx || !question || chatting) return;
+    chatting = true; sendBtn.disabled = true; sendBtn.textContent = '回答中…';
+    addMsg('user', question);
+    qEl.value = '';
+    try{
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-access-code': code },
+        body: JSON.stringify({ mode: 'chat', question: question, context: chatCtx, history: chatHistory })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || ('接口返回 ' + res.status));
+      const a = data.answer || '（没有返回内容）';
+      addMsg('ai', a);
+      chatHistory.push({ role: 'user', content: question });
+      chatHistory.push({ role: 'assistant', content: a });
+    }catch(err){
+      addMsg('ai', '追问失败：' + err.message);
+    }finally{
+      chatting = false; sendBtn.disabled = false; sendBtn.textContent = '发送';
+    }
+  }
+
+  sendBtn.addEventListener('click', () => ask(qEl.value));
+  qEl.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); ask(qEl.value); } });
+  document.querySelectorAll('.ai-chipbtn').forEach(b => b.addEventListener('click', () => ask(b.textContent)));
 
   goBtn.addEventListener('click', grade);
 
