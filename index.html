@@ -896,8 +896,8 @@ panels.addEventListener('click', e => {
   const codeEl = document.getElementById('aiCode');
 
   // 部署后端后，把地址填在这里，所有人打开就能直接用
-  const AI_DEFAULT_ENDPOINT = '';
-  const AI_DEFAULT_CODE = '';
+  const AI_DEFAULT_ENDPOINT = 'https://detailed-grasshopper-d9a0e9b307d-1420335919.ap-shanghai.app.tcloudbase.com/grade';
+  const AI_DEFAULT_CODE = 'essay2026';
 
   epEl.value = localStorage.getItem('ai_endpoint') || AI_DEFAULT_ENDPOINT;
   codeEl.value = localStorage.getItem('ai_code') || AI_DEFAULT_CODE;
