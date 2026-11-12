@@ -170,6 +170,49 @@ footer p{margin:4px 0}
   body.show-app .grid2{break-inside:avoid}
   body{background:#fff}
 }
+
+/* ---------- AI 批改 ---------- */
+.ai-fab{position:fixed;right:16px;bottom:20px;z-index:96;display:flex;align-items:center;gap:7px;
+  background:var(--green);color:#fff;border:0;border-radius:99px;padding:12px 18px;
+  font:14px/1 inherit;font-family:inherit;box-shadow:0 12px 30px -12px rgba(14,81,50,.75);cursor:pointer}
+.ai-fab:hover{background:#0b4229}
+.ai-mask{position:fixed;inset:0;z-index:140;background:rgba(16,22,16,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+.ai-panel{width:min(720px,100%);max-height:90vh;overflow:auto;background:var(--paper);border:1px solid var(--line);
+  border-radius:16px;box-shadow:0 30px 80px -30px #000}
+.ai-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);
+  position:sticky;top:0;background:var(--paper);z-index:2}
+.ai-head h3{margin:0;font-size:16.5px;font-family:"Songti SC","Noto Serif SC",Georgia,serif}
+.ai-head .btn{margin-left:auto}
+.ai-body{padding:16px 18px 20px}
+.ai-text{width:100%;min-height:190px;resize:vertical;border:1px solid var(--line);border-radius:10px;
+  padding:10px 12px;font:14.5px/1.7 Georgia,serif;color:var(--ink);background:#fff;margin-top:8px}
+.ai-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.ai-sel{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:13px/1.4 inherit;font-family:inherit;
+  background:#fff;color:var(--ink)}
+.ai-tip{font-size:12px;color:var(--sub);margin:0 0 4px}
+.ai-result{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px}
+.ai-scoreline{display:flex;align-items:baseline;gap:12px}
+.ai-score{font:44px/1 Georgia,serif;color:var(--green)}
+.ai-band{font-size:13px;color:var(--sub)}
+.ai-bars{display:grid;gap:7px;margin:14px 0 4px}
+.ai-bar{display:grid;grid-template-columns:58px 1fr 34px;gap:10px;align-items:center;font-size:12.5px;color:var(--sub)}
+.ai-bar i{display:block;height:7px;background:var(--line);border-radius:99px;overflow:hidden}
+.ai-bar i b{display:block;height:100%;background:var(--green2);border-radius:99px}
+.ai-sum{margin:12px 0 4px;font-size:14px;line-height:1.8}
+.ai-h{font-size:12px;letter-spacing:.06em;color:var(--sub);margin:16px 0 6px}
+.ai-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;font-size:13.5px;line-height:1.75}
+.ai-item .tag{font-size:11px;color:var(--red);background:var(--red-soft);border-radius:5px;padding:1px 6px;margin-right:6px}
+.ai-item blockquote{margin:6px 0;padding-left:10px;border-left:2px solid var(--line);color:var(--sub)}
+.ai-chip{display:inline-block;font-size:12px;border-radius:99px;padding:2px 9px;margin:2px 4px 2px 0;
+  background:var(--green-soft);color:var(--green)}
+.ai-chip.bad{background:var(--red-soft);color:var(--red)}
+.ai-chip.warn{background:var(--amber-soft);color:var(--amber)}
+.ai-settings{display:none;margin-top:12px;padding:12px;border:1px dashed var(--line);border-radius:10px;background:var(--bg)}
+.ai-settings.on{display:block}
+.ai-settings label{display:block;font-size:12px;color:var(--sub);margin:8px 0 4px}
+.ai-settings input{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;
+  font:13px/1.4 inherit;font-family:inherit;background:#fff;color:var(--ink)}
+@media(max-width:560px){.ai-panel{max-height:94vh}.ai-text{min-height:150px}.ai-fab{padding:11px 15px;font-size:13px}}
 </style>
 </head>
 <body>
@@ -272,6 +315,38 @@ footer p{margin:4px 0}
   </div>
 </footer>
 
+
+<button class="ai-fab" type="button" id="aiFab">✍️ AI 批改</button>
+<div class="ai-mask" id="aiMask" hidden>
+  <div class="ai-panel" role="dialog" aria-modal="true" aria-label="AI 批改作文">
+    <div class="ai-head">
+      <h3>AI 批改 · 考研英语一</h3>
+      <button class="btn sm plain" type="button" id="aiClose">关闭</button>
+    </div>
+    <div class="ai-body">
+      <select class="ai-sel" id="aiType">
+        <option value="big">大作文（图画 / 图表）</option>
+        <option value="small">小作文（通知 / 书信）</option>
+      </select>
+      <p class="ai-tip" style="margin-top:10px">把写好的作文贴进来：按考研标准给分，并检查模板句有没有用对、填空位有没有漏。</p>
+      <textarea class="ai-text" id="aiEssay" placeholder="Paste your essay here…"></textarea>
+      <div class="ai-row">
+        <button class="btn primary" type="button" id="aiGo">开始批改</button>
+        <button class="btn plain" type="button" id="aiClear">清空</button>
+        <button class="btn plain" type="button" id="aiCfg">设置</button>
+        <span class="ai-tip" id="aiState"></span>
+      </div>
+      <div class="ai-settings" id="aiSettings">
+        <label>接口地址（部署好后端的地址）</label>
+        <input id="aiEndpoint" placeholder="https://xxx.service.tcloudbase.com/grade">
+        <label>访问码（后端设了 ACCESS_CODE 才需要）</label>
+        <input id="aiCode" placeholder="没有就留空">
+        <div class="ai-row"><button class="btn sm plain" type="button" id="aiSave">保存</button></div>
+      </div>
+      <div class="ai-result" id="aiResult" hidden></div>
+    </div>
+  </div>
+</div>
 <div class="pop" id="pop" hidden><b></b><span></span><i></i></div>
 <div class="lightbox" id="lightbox" hidden><img alt=""></div>
 
@@ -799,6 +874,127 @@ panels.addEventListener('click', e => {
   btn.textContent = '⏹ 停止';
   speechSynthesis.speak(utter);
 });
+
+/* ---------- AI 批改 ---------- */
+(function(){
+  const fab = document.getElementById('aiFab');
+  const mask = document.getElementById('aiMask');
+  const panel = mask.querySelector('.ai-panel');
+  const essayEl = document.getElementById('aiEssay');
+  const typeEl = document.getElementById('aiType');
+  const goBtn = document.getElementById('aiGo');
+  const stateEl = document.getElementById('aiState');
+  const resultEl = document.getElementById('aiResult');
+  const settings = document.getElementById('aiSettings');
+  const epEl = document.getElementById('aiEndpoint');
+  const codeEl = document.getElementById('aiCode');
+
+  // 部署后端后，把地址填在这里，所有人打开就能直接用
+  const AI_DEFAULT_ENDPOINT = '';
+  const AI_DEFAULT_CODE = '';
+
+  epEl.value = localStorage.getItem('ai_endpoint') || AI_DEFAULT_ENDPOINT;
+  codeEl.value = localStorage.getItem('ai_code') || AI_DEFAULT_CODE;
+
+  // 没配置接口时先不显示按钮（加 ?setup 可打开设置）
+  const isSetup = /(\?|&)setup(=1)?(&|$)/.test(location.search);
+  const configured = !!(localStorage.getItem('ai_endpoint') || AI_DEFAULT_ENDPOINT);
+  if (!configured && !isSetup) fab.hidden = true;
+  if (isSetup) { setTimeout(function(){ fab.click(); settings.classList.add('on'); }, 50); }
+
+  function open(){ mask.hidden = false; document.body.style.overflow = 'hidden'; essayEl.focus(); }
+  function close(){ mask.hidden = true; document.body.style.overflow = ''; }
+
+  fab.addEventListener('click', open);
+  document.getElementById('aiClose').addEventListener('click', close);
+  mask.addEventListener('click', e => { if (e.target === mask) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !mask.hidden) close(); });
+
+  document.getElementById('aiClear').addEventListener('click', () => {
+    essayEl.value = ''; resultEl.hidden = true; resultEl.innerHTML = ''; stateEl.textContent = '';
+  });
+  document.getElementById('aiCfg').addEventListener('click', () => settings.classList.toggle('on'));
+  document.getElementById('aiSave').addEventListener('click', () => {
+    localStorage.setItem('ai_endpoint', epEl.value.trim());
+    localStorage.setItem('ai_code', codeEl.value.trim());
+    settings.classList.remove('on');
+    fab.hidden = false;
+    stateEl.textContent = '已保存';
+  });
+
+  function bar(label, v){
+    const pct = Math.max(0, Math.min(100, (Number(v) || 0) / 5 * 100));
+    return '<div class="ai-bar"><span>' + label + '</span><i><b style="width:' + pct + '%"></b></i><span>' + (v == null ? '-' : v) + '/5</span></div>';
+  }
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function render(r){
+    const t = r.template || {};
+    let html = '';
+    html += '<div class="ai-scoreline"><span class="ai-score">' + esc(r.score) + '</span><span class="ai-band">' + esc(r.band || '') + '</span></div>';
+    const d = r.dimensions || {};
+    html += '<div class="ai-bars">' + bar('内容', d.content) + bar('结构', d.structure) + bar('语言', d.language) + '</div>';
+    if (r.summary) html += '<p class="ai-sum">' + esc(r.summary) + '</p>';
+
+    if (Array.isArray(r.issues) && r.issues.length){
+      html += '<p class="ai-h">逐条问题</p>';
+      r.issues.forEach(it => {
+        html += '<div class="ai-item"><span class="tag">' + esc(it.type || '问题') + '</span>' + esc(it.advice || '') +
+                (it.quote ? '<blockquote>“' + esc(it.quote) + '”</blockquote>' : '') +
+                (it.better ? '<div>改成：<b>' + esc(it.better) + '</b></div>' : '') + '</div>';
+      });
+    }
+    if (Array.isArray(r.rewrites) && r.rewrites.length){
+      html += '<p class="ai-h">句子升级</p>';
+      r.rewrites.forEach(w => {
+        html += '<div class="ai-item"><blockquote>' + esc(w.original) + '</blockquote>' +
+                '<div>→ <b>' + esc(w.improved) + '</b></div>' +
+                (w.why ? '<div class="ai-tip">' + esc(w.why) + '</div>' : '') + '</div>';
+      });
+    }
+    if ((t.kept && t.kept.length) || (t.broken && t.broken.length) || (t.unfilled && t.unfilled.length)){
+      html += '<p class="ai-h">模板使用</p>';
+      (t.kept || []).forEach(x => html += '<span class="ai-chip">✓ ' + esc(x) + '</span>');
+      (t.broken || []).forEach(x => html += '<span class="ai-chip bad">✗ ' + esc(x) + '</span>');
+      (t.unfilled || []).forEach(x => html += '<span class="ai-chip warn">? ' + esc(x) + '</span>');
+    }
+    if (r.mock) html += '<p class="ai-tip" style="margin-top:12px">（当前是演示数据，后端接上 DeepSeek 后就是真实批改）</p>';
+    resultEl.innerHTML = html;
+    resultEl.hidden = false;
+  }
+
+  async function grade(){
+    const endpoint = (localStorage.getItem('ai_endpoint') || '').trim();
+    const code = (localStorage.getItem('ai_code') || '').trim();
+    const essay = essayEl.value.trim();
+    if (!endpoint){ settings.classList.add('on'); stateEl.textContent = '先填接口地址'; return; }
+    if (essay.length < 60){ stateEl.textContent = '作文太短，至少贴一段完整内容'; return; }
+
+    goBtn.disabled = true; goBtn.textContent = '批改中…'; stateEl.textContent = '';
+    resultEl.hidden = true;
+    try{
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-access-code': code },
+        body: JSON.stringify({ essay: essay, type: typeEl.value })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || ('接口返回 ' + res.status));
+      render(data);
+      stateEl.textContent = '';
+    }catch(err){
+      stateEl.textContent = '批改失败：' + err.message;
+    }finally{
+      goBtn.disabled = false; goBtn.textContent = '开始批改';
+    }
+  }
+
+  goBtn.addEventListener('click', grade);
+})();
+
 </script>
 </body>
 </html>
