@@ -119,8 +119,9 @@ function callDeepSeek(essay, type) {
     model: MODEL,
     messages: [{ role: 'user', content: buildPrompt(essay, type) }],
     temperature: 0.3,
-    max_tokens: 1200,
-    response_format: { type: 'json_object' }
+    max_tokens: 3000,
+    response_format: { type: 'json_object' },
+    thinking: { type: 'disabled' }
   });
 
   return new Promise((resolve, reject) => {
@@ -143,11 +144,20 @@ function callDeepSeek(essay, type) {
           if (res.statusCode !== 200) return reject(new Error('DeepSeek ' + res.statusCode + ': ' + data.slice(0, 300)));
           try {
             const j = JSON.parse(data);
-            let txt = j.choices[0].message.content.trim();
-            txt = txt.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+            const choice = (j.choices && j.choices[0]) || {};
+            const msg = choice.message || {};
+            const raw = (msg.content || '').trim();
+            if (!raw) {
+              return reject(new Error('模型没有返回内容（finish_reason=' + (choice.finish_reason || '?') +
+                '，reasoning 长度=' + ((msg.reasoning_content || '').length) + '）'));
+            }
+            let txt = raw.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+            const s = txt.indexOf('{');
+            const e = txt.lastIndexOf('}');
+            if (s >= 0 && e > s) txt = txt.slice(s, e + 1);
             resolve(JSON.parse(txt));
           } catch (e) {
-            reject(new Error('解析模型输出失败：' + e.message));
+            reject(new Error('解析模型输出失败：' + e.message + '；原文前 200 字：' + String(data).slice(0, 200)));
           }
         });
       }
@@ -224,6 +234,7 @@ async function handle({ method, headers, body, ip }) {
     const result = await callDeepSeek(text, type);
     return { status: 200, json: result };
   } catch (e) {
+    console.error('[deepseek]', e.message);
     return { status: 502, json: { error: e.message } };
   }
 }
@@ -272,7 +283,7 @@ if (require.main === module) {
   const http = require('http');
   const port = process.env.PORT || 8787;
   http.createServer(httpHandler).listen(port, () => {
-    console.log('AI 批改服务已启动: http://127.0.0.1:' + port + (MOCK ? '（MOCK 模式，不调用 API）' : ''));
+    console.log('AI 批改服务已启动: http://127.0.0.1:' + port + (MOCK ? '（MOCK 模式，不调用 API）' : '（模型 ' + MODEL + '，已关闭思考模式）'));
   });
 }
 
