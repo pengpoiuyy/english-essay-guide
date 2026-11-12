@@ -1,0 +1,10 @@
+{
+  "name": "essay-ai-grader",
+  "version": "1.0.0",
+  "description": "考研英语一作文 AI 批改接口（DeepSeek）",
+  "main": "server.js",
+  "engines": { "node": ">=16" },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
