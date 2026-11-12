@@ -177,7 +177,9 @@ footer p{margin:4px 0}
 .ai-plan .rev{font-family:Georgia,serif;font-weight:600}
 .ai-essay{margin:8px 0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff}
 .ai-essay pre{white-space:pre-wrap;font:13.5px/1.8 Georgia,serif;margin:0;color:var(--ink)}
-.ai-photo{display:flex;gap:10px;align-items:flex-start;margin-top:10px}
+.ai-photo{display:flex;gap:10px;align-items:flex-start;margin-top:10px;flex-wrap:wrap}
+.ai-photo figure{margin:0;text-align:center}
+.ai-photo figcaption{font-size:11px;color:var(--sub);margin-top:4px}
 .ai-photo img{max-width:150px;max-height:150px;border:1px solid var(--line);border-radius:10px;object-fit:cover;background:#fff}
 .ai-tr{margin:10px 0;border:1px dashed var(--line);border-radius:10px;padding:8px 12px;background:var(--bg)}
 .ai-tr summary{cursor:pointer;font-size:12.5px;color:var(--green)}
@@ -209,6 +211,7 @@ footer p{margin:4px 0}
 .ai-bandwhy{margin:8px 0 0;font-size:12.5px;color:var(--sub);line-height:1.7}
 .ai-meta{margin:10px 0 0;font-size:12.5px;color:var(--sub);line-height:1.7}
 .ai-ok{color:var(--green2)}
+.ai-bad{color:var(--red)}
 .ai-warn{color:var(--amber)}
 .ai-bars{display:grid;gap:7px;margin:14px 0 4px}
 .ai-bar{display:grid;grid-template-columns:58px 1fr 34px;gap:10px;align-items:center;font-size:12.5px;color:var(--sub)}
@@ -344,15 +347,18 @@ footer p{margin:4px 0}
         <option value="big">大作文（图画 / 图表）</option>
         <option value="small">小作文（通知 / 书信）</option>
       </select>
-      <p class="ai-tip" style="margin-top:10px">贴文字，或直接拍作文照片：先识别再按英语（一）考纲五档评分（先定档、再给分），并检查模板句有没有用对、填空位有没有漏。</p>
+      <p class="ai-tip" style="margin-top:10px">贴文字或拍两张照片：题目一张、作文一张。有题目会先判断是否跑题、主题词是否准确；再按考纲五档评分，并给出词汇升级和结合模板的改法。</p>
       <textarea class="ai-text" id="aiEssay" placeholder="Paste your essay here…"></textarea>
       <div class="ai-row" style="margin-top:10px">
-        <button class="btn plain" type="button" id="aiPick">📷 拍照 / 上传</button>
-        <input type="file" id="aiFile" accept="image/*" capture="environment" hidden>
-        <span class="ai-tip" id="aiFileName">贴文字，或拍作文照片</span>
+        <button class="btn plain" type="button" id="aiPickPrompt">📷 题目照片</button>
+        <button class="btn plain" type="button" id="aiPickEssay">📷 作文照片</button>
+        <input type="file" id="aiFilePrompt" accept="image/*" capture="environment" hidden>
+        <input type="file" id="aiFileEssay" accept="image/*" capture="environment" hidden>
+        <span class="ai-tip" id="aiFileName">题目可选，作文建议拍照</span>
       </div>
       <div class="ai-photo" id="aiPhotoBox" hidden>
-        <img id="aiPhoto" alt="作文照片">
+        <figure id="aiPromptFig" hidden><img id="aiPhotoPrompt" alt="题目照片"><figcaption>题目</figcaption></figure>
+        <figure id="aiEssayFig" hidden><img id="aiPhotoEssay" alt="作文照片"><figcaption>作文</figcaption></figure>
         <button class="btn sm plain" type="button" id="aiPhotoDel">移除</button>
       </div>
       <div class="ai-row">
@@ -935,21 +941,35 @@ panels.addEventListener('click', e => {
   mask.addEventListener('click', e => { if (e.target === mask) close(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !mask.hidden) close(); });
 
-  /* ---------- 拍照 / 上传 ---------- */
-  const fileEl = document.getElementById('aiFile');
+  /* ---------- 拍照 / 上传（题目 + 作文） ---------- */
+  const filePrompt = document.getElementById('aiFilePrompt');
+  const fileEssay = document.getElementById('aiFileEssay');
   const photoBox = document.getElementById('aiPhotoBox');
-  const photoEl = document.getElementById('aiPhoto');
+  const figPrompt = document.getElementById('aiPromptFig');
+  const figEssay = document.getElementById('aiEssayFig');
+  const imgPrompt = document.getElementById('aiPhotoPrompt');
+  const imgEssay = document.getElementById('aiPhotoEssay');
   const fileTip = document.getElementById('aiFileName');
-  let photoData = '';
+  let dataPrompt = '', dataEssay = '';
 
-  document.getElementById('aiPick').addEventListener('click', () => fileEl.click());
+  document.getElementById('aiPickPrompt').addEventListener('click', () => filePrompt.click());
+  document.getElementById('aiPickEssay').addEventListener('click', () => fileEssay.click());
+
+  function syncBox(){
+    figPrompt.hidden = !dataPrompt;
+    figEssay.hidden = !dataEssay;
+    photoBox.hidden = !(dataPrompt || dataEssay);
+    const parts = [];
+    if (dataPrompt) parts.push('题目已选');
+    if (dataEssay) parts.push('作文已选');
+    fileTip.textContent = parts.length ? parts.join('，') : '题目可选，作文建议拍照';
+  }
 
   function resetPhoto(){
-    photoData = '';
-    photoBox.hidden = true;
-    photoEl.removeAttribute('src');
-    fileEl.value = '';
-    fileTip.textContent = '贴文字，或拍作文照片';
+    dataPrompt = ''; dataEssay = '';
+    imgPrompt.removeAttribute('src'); imgEssay.removeAttribute('src');
+    filePrompt.value = ''; fileEssay.value = '';
+    syncBox();
   }
   document.getElementById('aiPhotoDel').addEventListener('click', resetPhoto);
 
@@ -978,25 +998,29 @@ panels.addEventListener('click', e => {
     });
   }
 
-  fileEl.addEventListener('change', async () => {
-    const f = fileEl.files && fileEl.files[0];
-    if (!f) return;
-    fileTip.textContent = '处理中…';
-    try{
-      photoData = await compress(f);
-      photoEl.src = photoData;
-      photoBox.hidden = false;
-      const kb = Math.round(photoData.length * 0.75 / 1024);
-      fileTip.textContent = f.name + '（约 ' + kb + ' KB，已压缩）';
-    }catch(e){
-      fileTip.textContent = '图片处理失败，换一张试试';
-    }
-  });
+  function bind(input, apply, imgEl){
+    input.addEventListener('change', async () => {
+      const f = input.files && input.files[0];
+      if (!f) return;
+      fileTip.textContent = '处理中…';
+      try{
+        const d = await compress(f);
+        apply(d);
+        imgEl.src = d;
+        syncBox();
+      }catch(e){
+        fileTip.textContent = '图片处理失败，换一张试试';
+      }
+    });
+  }
+  bind(filePrompt, d => { dataPrompt = d; }, imgPrompt);
+  bind(fileEssay, d => { dataEssay = d; }, imgEssay);
 
   document.getElementById('aiClear').addEventListener('click', () => {
     essayEl.value = ''; resultEl.hidden = true; resultEl.innerHTML = ''; stateEl.textContent = '';
     resetPhoto();
   });
+
   document.getElementById('aiCfg').addEventListener('click', () => settings.classList.toggle('on'));
   document.getElementById('aiSave').addEventListener('click', () => {
     localStorage.setItem('ai_endpoint', epEl.value.trim());
@@ -1023,6 +1047,23 @@ panels.addEventListener('click', e => {
     let html = '';
     html += '<div class="ai-scoreline"><span class="ai-score">' + esc(r.score) + '</span><span class="ai-band">' + esc(r.band || '') + '</span></div>';
     if (r.band_reason) html += '<p class="ai-bandwhy">定档理由：' + esc(r.band_reason) + '</p>';
+    if (r.topic_check && (r.topic_check.verdict || r.topic_check.reason)){
+      const tc = r.topic_check;
+      const cls = tc.verdict === '切题' ? 'ai-ok' : (tc.verdict === '部分跑题' ? 'ai-warn' : 'ai-bad');
+      html += '<p class="ai-meta">切题判断：<b class="' + cls + '">' + esc(tc.verdict || '') + '</b>' +
+              (tc.reason ? '　' + esc(tc.reason) : '') + '</p>';
+      if (Array.isArray(tc.missing_points) && tc.missing_points.length)
+        html += '<p class="ai-meta">漏掉的要点：' + tc.missing_points.map(esc).join('；') + '</p>';
+      if (tc.topic_words && (tc.topic_words.used || tc.topic_words.better))
+        html += '<div class="ai-item"><span class="tag">主题词</span>你写：' + esc(tc.topic_words.used || '—') +
+                '　→　更好：<b>' + esc(tc.topic_words.better || '') + '</b></div>';
+    }
+
+    if (r.prompt_transcript) {
+      html += '<details class="ai-tr"><summary>识别到的题目（点开核对）</summary><pre>' +
+              esc(r.prompt_transcript) + '</pre></details>';
+    }
+
     if (r.transcript) {
       html += '<details class="ai-tr"><summary>识别到的原文（点开核对，识别有误就改一下）</summary><pre>' +
               esc(r.transcript) + '</pre></details>';
@@ -1077,6 +1118,15 @@ panels.addEventListener('click', e => {
       (t.broken || []).forEach(x => html += '<span class="ai-chip bad">✗ ' + esc(x) + '</span>');
       (t.unfilled || []).forEach(x => html += '<span class="ai-chip warn">? ' + esc(x) + '</span>');
     }
+    if (Array.isArray(r.vocab_upgrades) && r.vocab_upgrades.length){
+      html += '<p class="ai-h">词汇升级（考纲内更高级的说法）</p>';
+      r.vocab_upgrades.forEach(v => {
+        html += '<div class="ai-item"><b>' + esc(v.basic || '') + '</b>　→　<b class="ai-ok">' + esc(v.better || '') + '</b>' +
+          (v.why ? '<div class="ai-tip">' + esc(v.why) + '</div>' : '') +
+          (v.example ? '<blockquote>' + esc(v.example) + '</blockquote>' : '') + '</div>';
+      });
+    }
+
     if (Array.isArray(r.analysis) && r.analysis.length){
       html += '<p class="ai-h">逐段分析</p>';
       r.analysis.forEach(a => {
@@ -1117,7 +1167,7 @@ panels.addEventListener('click', e => {
     const code = (localStorage.getItem('ai_code') || '').trim();
     const essay = essayEl.value.trim();
     if (!endpoint){ settings.classList.add('on'); stateEl.textContent = '先填接口地址'; return; }
-    if (!photoData && essay.length < 60){ stateEl.textContent = '贴一段完整作文，或拍一张作文照片'; return; }
+    if (!dataEssay && essay.length < 60){ stateEl.textContent = '拍一张作文照片，或贴一段完整作文'; return; }
 
     goBtn.disabled = true; goBtn.textContent = '批改中…'; stateEl.textContent = '';
     resultEl.hidden = true;
@@ -1125,7 +1175,7 @@ panels.addEventListener('click', e => {
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-access-code': code },
-        body: JSON.stringify(photoData ? { image: photoData, type: typeEl.value } : { essay: essay, type: typeEl.value })
+        body: JSON.stringify({ essay: essay, type: typeEl.value, image: dataEssay, promptImage: dataPrompt })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || ('接口返回 ' + res.status));
