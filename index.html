@@ -194,6 +194,12 @@ footer p{margin:4px 0}
 .ai-scoreline{display:flex;align-items:baseline;gap:12px}
 .ai-score{font:44px/1 Georgia,serif;color:var(--green)}
 .ai-band{font-size:13px;color:var(--sub)}
+.ai-crit{margin-bottom:2px}
+.ai-crit p{margin:2px 0 6px;font-size:12px;color:var(--sub);line-height:1.6}
+.ai-bandwhy{margin:8px 0 0;font-size:12.5px;color:var(--sub);line-height:1.7}
+.ai-meta{margin:10px 0 0;font-size:12.5px;color:var(--sub);line-height:1.7}
+.ai-ok{color:var(--green2)}
+.ai-warn{color:var(--amber)}
 .ai-bars{display:grid;gap:7px;margin:14px 0 4px}
 .ai-bar{display:grid;grid-template-columns:58px 1fr 34px;gap:10px;align-items:center;font-size:12.5px;color:var(--sub)}
 .ai-bar i{display:block;height:7px;background:var(--line);border-radius:99px;overflow:hidden}
@@ -922,9 +928,10 @@ panels.addEventListener('click', e => {
     stateEl.textContent = '已保存';
   });
 
-  function bar(label, v){
+  function bar(label, v, comment){
     const pct = Math.max(0, Math.min(100, (Number(v) || 0) / 5 * 100));
-    return '<div class="ai-bar"><span>' + label + '</span><i><b style="width:' + pct + '%"></b></i><span>' + (v == null ? '-' : v) + '/5</span></div>';
+    return '<div class="ai-crit"><div class="ai-bar"><span>' + label + '</span><i><b style="width:' + pct + '%"></b></i><span>' + (v == null ? '-' : v) + '/5</span></div>' +
+           (comment ? '<p>' + esc(comment) + '</p>' : '') + '</div>';
   }
 
   function esc(s){
@@ -933,10 +940,37 @@ panels.addEventListener('click', e => {
 
   function render(r){
     const t = r.template || {};
+    const c = r.criteria || null;
+    const d = r.dimensions || {};
     let html = '';
     html += '<div class="ai-scoreline"><span class="ai-score">' + esc(r.score) + '</span><span class="ai-band">' + esc(r.band || '') + '</span></div>';
-    const d = r.dimensions || {};
-    html += '<div class="ai-bars">' + bar('内容', d.content) + bar('结构', d.structure) + bar('语言', d.language) + '</div>';
+    if (r.band_reason) html += '<p class="ai-bandwhy">定档理由：' + esc(r.band_reason) + '</p>';
+
+    if (c){
+      html += '<div class="ai-bars">' +
+              bar('内容', c.content && c.content.rating, c.content && c.content.comment) +
+              bar('结构', c.organization && c.organization.rating, c.organization && c.organization.comment) +
+              bar('语言', c.language && c.language.rating, c.language && c.language.comment) + '</div>';
+    } else {
+      html += '<div class="ai-bars">' + bar('内容', d.content) + bar('结构', d.structure) + bar('语言', d.language) + '</div>';
+    }
+
+    if (r.word_count || r.format){
+      html += '<p class="ai-meta">';
+      if (r.word_count) html += '字数 <b>' + esc(r.word_count) + '</b>';
+      if (r.format) html += (r.word_count ? '　·　' : '') + '格式/语域 ' + (r.format.ok ? '<b class="ai-ok">合格</b>' : '<b class="ai-warn">需调整</b>') +
+        (r.format.comment ? '：' + esc(r.format.comment) : '');
+      html += '</p>';
+    }
+
+    if (Array.isArray(r.deductions) && r.deductions.length){
+      html += '<p class="ai-h">扣分项</p>';
+      r.deductions.forEach(x => {
+        html += '<div class="ai-item"><span class="tag">' + esc(x.item || '扣分') + '</span>' +
+                (x.points != null ? '<b>−' + esc(x.points) + '</b> ' : '') + esc(x.reason || '') + '</div>';
+      });
+    }
+
     if (r.summary) html += '<p class="ai-sum">' + esc(r.summary) + '</p>';
 
     if (Array.isArray(r.issues) && r.issues.length){
