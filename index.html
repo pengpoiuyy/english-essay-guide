@@ -172,6 +172,11 @@ footer p{margin:4px 0}
 }
 
 /* ---------- AI 批改 ---------- */
+.ai-plan .tpl{color:var(--green);font-family:Georgia,serif}
+.ai-plan .you{color:var(--sub);font-family:Georgia,serif}
+.ai-plan .rev{font-family:Georgia,serif;font-weight:600}
+.ai-essay{margin:8px 0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff}
+.ai-essay pre{white-space:pre-wrap;font:13.5px/1.8 Georgia,serif;margin:0;color:var(--ink)}
 .ai-photo{display:flex;gap:10px;align-items:flex-start;margin-top:10px}
 .ai-photo img{max-width:150px;max-height:150px;border:1px solid var(--line);border-radius:10px;object-fit:cover;background:#fff}
 .ai-tr{margin:10px 0;border:1px dashed var(--line);border-radius:10px;padding:8px 12px;background:var(--bg)}
@@ -1072,6 +1077,36 @@ panels.addEventListener('click', e => {
       (t.broken || []).forEach(x => html += '<span class="ai-chip bad">✗ ' + esc(x) + '</span>');
       (t.unfilled || []).forEach(x => html += '<span class="ai-chip warn">? ' + esc(x) + '</span>');
     }
+    if (Array.isArray(r.analysis) && r.analysis.length){
+      html += '<p class="ai-h">逐段分析</p>';
+      r.analysis.forEach(a => {
+        html += '<div class="ai-item"><span class="tag">' + esc(a.part || '段落') + '</span>' +
+          (a.task ? '<div><b>这一段该做：</b>' + esc(a.task) + '</div>' : '') +
+          (a.did ? '<div><b>你做到了：</b>' + esc(a.did) + '</div>' : '') +
+          (a.gap ? '<div><b>缺口：</b>' + esc(a.gap) + '</div>' : '') +
+          (a.template_ref ? '<div class="ai-tip">对应模板：' + esc(a.template_ref) + '</div>' : '') +
+          '</div>';
+      });
+    }
+
+    if (Array.isArray(r.template_plan) && r.template_plan.length){
+      html += '<p class="ai-h">结合模板怎么改</p><div class="ai-plan">';
+      r.template_plan.forEach(p => {
+        html += '<div class="ai-item"><span class="tag">' + esc(p.block || '模板') + '</span>' +
+          (p.template_sentence ? '<div class="tpl">模板：' + esc(p.template_sentence) + '</div>' : '') +
+          (p.your_version ? '<div class="you">你写：' + esc(p.your_version) + '</div>' : '') +
+          (p.revised ? '<div class="rev">改成：' + esc(p.revised) + '</div>' : '') +
+          (p.why ? '<div class="ai-tip">' + esc(p.why) + '</div>' : '') +
+          '</div>';
+      });
+      html += '</div>';
+    }
+
+    if (r.revised_essay){
+      html += '<p class="ai-h">按模板改写后的范文 <button class="btn sm plain ai-copy" type="button">复制</button></p>' +
+              '<div class="ai-essay"><pre>' + esc(r.revised_essay) + '</pre></div>';
+    }
+
     if (r.mock) html += '<p class="ai-tip" style="margin-top:12px">（当前是演示数据，后端接上 DeepSeek 后就是真实批改）</p>';
     resultEl.innerHTML = html;
     resultEl.hidden = false;
@@ -1104,6 +1139,25 @@ panels.addEventListener('click', e => {
   }
 
   goBtn.addEventListener('click', grade);
+
+  // 复制改写范文
+  resultEl.addEventListener('click', e => {
+    const btn = e.target.closest('.ai-copy');
+    if (!btn) return;
+    const box = btn.closest('.ai-h').nextElementSibling;
+    const pre = box && box.querySelector('pre');
+    if (!pre) return;
+    const text = pre.textContent;
+    const done = () => { btn.textContent = '已复制'; setTimeout(() => { btn.textContent = '复制'; }, 1500); };
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(() => {});
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (err) {}
+      document.body.removeChild(ta);
+    }
+  });
 })();
 
 </script>
