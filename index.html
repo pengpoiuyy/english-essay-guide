@@ -137,6 +137,8 @@ details.plain p{font-family:Georgia,serif;font-size:15px;line-height:1.95;margin
 .pop-speak{border:0;background:rgba(255,255,255,.16);color:#fff;border-radius:8px;padding:2px 7px;
   font-size:13px;line-height:1.6;cursor:pointer;flex:none}
 .pop-speak:hover{background:rgba(255,255,255,.28)}
+.pop-speak.on{background:rgba(255,255,255,.34);animation:pulse .9s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
 .pop-speak:active{transform:scale(.94)}
 .pop b{display:block;font-family:Georgia,serif;font-size:14.5px;margin-bottom:2px}
 .pop span{color:#dbe4d8;font-size:12.5px}
@@ -872,8 +874,11 @@ function lookup(word){
   return VOCAB[w] || VOCAB[word.toLowerCase()] || null;
 }
 
-/* 朗读单词 */
+/* 朗读单词：优先在线真人发音（微信里也能用），失败退回系统语音 */
 let enVoice = null;
+let wordAudio = null;
+let lastWord = '';
+
 function pickVoice(){
   if (!('speechSynthesis' in window)) return null;
   const vs = speechSynthesis.getVoices() || [];
@@ -887,17 +892,52 @@ if ('speechSynthesis' in window){
   speechSynthesis.addEventListener('voiceschanged', () => { enVoice = pickVoice(); });
 }
 
-function speakWord(word){
-  if (!('speechSynthesis' in window)) return;
+function speakSystem(word){
+  if (!('speechSynthesis' in window)) return false;
   try{
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(word);
     u.lang = 'en-US';
     u.rate = 0.88;
-    u.pitch = 1;
     if (enVoice) u.voice = enVoice;
     speechSynthesis.speak(u);
+    return true;
+  }catch(e){ return false; }
+}
+
+function speakWord(word){
+  const raw = String(word || '');
+  lastWord = raw;
+  const clean = raw.replace(/[^A-Za-z'\- ]/g, '').trim();
+  if (!clean) return;
+
+  const btn = document.getElementById('popSpeak');
+  if (btn) btn.classList.add('on');
+
+  // 1) 在线音频（有道词典发音）
+  try{
+    if (!wordAudio){
+      wordAudio = new Audio();
+      wordAudio.preload = 'auto';
+      wordAudio.addEventListener('ended', () => { const b = document.getElementById('popSpeak'); if (b) b.classList.remove('on'); });
+      wordAudio.addEventListener('error', () => {
+        const b = document.getElementById('popSpeak'); if (b) b.classList.remove('on');
+        if (!speakSystem(lastWord)){
+          const hint = document.getElementById('pop');
+          if (hint) hint.querySelector('i').textContent = '发音加载失败，请检查网络';
+        }
+      });
+    }
+    wordAudio.pause();
+    wordAudio.currentTime = 0;
+    wordAudio.src = 'https://dict.youdao.com/dictvoice?type=2&audio=' + encodeURIComponent(clean);
+    const p = wordAudio.play();
+    if (p && p.catch) p.catch(() => { speakSystem(clean); });
+    return;
   }catch(e){}
+
+  // 2) 退回系统语音
+  speakSystem(clean);
 }
 
 function showPop(el){
@@ -905,7 +945,7 @@ function showPop(el){
   const def = lookup(word);
   popB.textContent = word;
   popS.textContent = def || '（暂未收录）';
-  popI.textContent = ('speechSynthesis' in window) ? '' : '当前浏览器不支持发音';
+  popI.textContent = '';
   pop.hidden = false;
   speakWord(word);
 
