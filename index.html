@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="description" content="2026 / 2025 / 2016 / 2015 英语一真题 × 作文模板：左栏模板、右栏成文，红字标模板外内容，点单词查词义并发音。">
 <meta property="og:title" content="英语一 · 模板与真题对照（可点词查义）">
 <meta property="og:description" content="左模板右成文，点单词查词义；五个标签覆盖 2026—2015 真题与小作文通知。">
@@ -408,6 +411,7 @@ footer p{margin:4px 0}
     </div>
   </div>
 </div>
+<audio id="ttsAudio" preload="auto" playsinline webkit-playsinline style="position:absolute;width:0;height:0;opacity:0"></audio>
 <div class="pop" id="pop" hidden><div class="pop-top"><b></b><button class="pop-speak" id="popSpeak" type="button" aria-label="朗读单词">🔊</button></div><span></span><i></i></div>
 <div class="lightbox" id="lightbox" hidden><img alt=""></div>
 
@@ -874,10 +878,11 @@ function lookup(word){
   return VOCAB[w] || VOCAB[word.toLowerCase()] || null;
 }
 
-/* 朗读单词：优先在线真人发音（微信里也能用），失败退回系统语音 */
+/* 朗读单词：页面内常驻 audio 播放真人发音，失败退回系统语音 */
 let enVoice = null;
-let wordAudio = null;
 let lastWord = '';
+
+const ttsEl = document.getElementById('ttsAudio');
 
 function pickVoice(){
   if (!('speechSynthesis' in window)) return null;
@@ -905,6 +910,28 @@ function speakSystem(word){
   }catch(e){ return false; }
 }
 
+function popHint(text){
+  const pop = document.getElementById('pop');
+  if (pop) pop.querySelector('i').textContent = text || '';
+}
+
+function onPlayFail(clean){
+  if (speakSystem(clean)) return;
+  popHint('没声音？点一下 🔊 再试');
+}
+
+if (ttsEl){
+  ttsEl.addEventListener('ended', () => {
+    const b = document.getElementById('popSpeak');
+    if (b) b.classList.remove('on');
+  });
+  ttsEl.addEventListener('error', () => {
+    const b = document.getElementById('popSpeak');
+    if (b) b.classList.remove('on');
+    onPlayFail(lastWord);
+  });
+}
+
 function speakWord(word){
   const raw = String(word || '');
   lastWord = raw;
@@ -913,31 +940,18 @@ function speakWord(word){
 
   const btn = document.getElementById('popSpeak');
   if (btn) btn.classList.add('on');
+  popHint('');
 
-  // 1) 在线音频（有道词典发音）
   try{
-    if (!wordAudio){
-      wordAudio = new Audio();
-      wordAudio.preload = 'auto';
-      wordAudio.addEventListener('ended', () => { const b = document.getElementById('popSpeak'); if (b) b.classList.remove('on'); });
-      wordAudio.addEventListener('error', () => {
-        const b = document.getElementById('popSpeak'); if (b) b.classList.remove('on');
-        if (!speakSystem(lastWord)){
-          const hint = document.getElementById('pop');
-          if (hint) hint.querySelector('i').textContent = '发音加载失败，请检查网络';
-        }
-      });
-    }
-    wordAudio.pause();
-    wordAudio.currentTime = 0;
-    wordAudio.src = 'https://dict.youdao.com/dictvoice?type=2&audio=' + encodeURIComponent(clean);
-    const p = wordAudio.play();
-    if (p && p.catch) p.catch(() => { speakSystem(clean); });
+    ttsEl.pause();
+    ttsEl.src = 'https://dict.youdao.com/dictvoice?type=2&audio=' + encodeURIComponent(clean);
+    ttsEl.load();
+    const p = ttsEl.play();
+    if (p && p.catch) p.catch(() => { onPlayFail(clean); });
     return;
-  }catch(e){}
-
-  // 2) 退回系统语音
-  speakSystem(clean);
+  }catch(e){
+    onPlayFail(clean);
+  }
 }
 
 function showPop(el){
