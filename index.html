@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="2026 / 2025 / 2016 / 2015 英语一真题 × 作文模板：左栏模板、右栏成文，红字标模板外内容，点单词查词义。">
+<meta name="description" content="2026 / 2025 / 2016 / 2015 英语一真题 × 作文模板：左栏模板、右栏成文，红字标模板外内容，点单词查词义并发音。">
 <meta property="og:title" content="英语一 · 模板与真题对照（可点词查义）">
 <meta property="og:description" content="左模板右成文，点单词查词义；五个标签覆盖 2026—2015 真题与小作文通知。">
 <meta property="og:type" content="website">
@@ -133,6 +133,11 @@ details.plain p{font-family:Georgia,serif;font-size:15px;line-height:1.95;margin
 /* popover */
 .pop{position:fixed;z-index:90;background:#1f261f;color:#fff;border-radius:10px;padding:9px 13px;
   box-shadow:0 10px 30px -12px rgba(0,0,0,.55);max-width:280px;font-size:13px;line-height:1.5}
+.pop-top{display:flex;align-items:center;gap:8px}
+.pop-speak{border:0;background:rgba(255,255,255,.16);color:#fff;border-radius:8px;padding:2px 7px;
+  font-size:13px;line-height:1.6;cursor:pointer;flex:none}
+.pop-speak:hover{background:rgba(255,255,255,.28)}
+.pop-speak:active{transform:scale(.94)}
 .pop b{display:block;font-family:Georgia,serif;font-size:14.5px;margin-bottom:2px}
 .pop span{color:#dbe4d8;font-size:12.5px}
 .pop i{display:block;font-style:normal;font-size:11px;color:#9fb39c;margin-top:3px}
@@ -263,7 +268,7 @@ footer p{margin:4px 0}
       <div class="legend">
         <span><b>红框</b> = 模板空格</span>
         <span><b>红字</b> = 模板外内容</span>
-        <span><b>点单词</b> = 查词义</span>
+        <span><b>点单词</b> = 查词义 + 发音</span>
       </div>
     </div>
   </section>
@@ -401,7 +406,7 @@ footer p{margin:4px 0}
     </div>
   </div>
 </div>
-<div class="pop" id="pop" hidden><b></b><span></span><i></i></div>
+<div class="pop" id="pop" hidden><div class="pop-top"><b></b><button class="pop-speak" id="popSpeak" type="button" aria-label="朗读单词">🔊</button></div><span></span><i></i></div>
 <div class="lightbox" id="lightbox" hidden><img alt=""></div>
 
 <script>
@@ -867,13 +872,42 @@ function lookup(word){
   return VOCAB[w] || VOCAB[word.toLowerCase()] || null;
 }
 
+/* 朗读单词 */
+let enVoice = null;
+function pickVoice(){
+  if (!('speechSynthesis' in window)) return null;
+  const vs = speechSynthesis.getVoices() || [];
+  if (!vs.length) return null;
+  return vs.find(v => /^en[-_]US/i.test(v.lang)) ||
+         vs.find(v => /^en[-_]GB/i.test(v.lang)) ||
+         vs.find(v => (v.lang || '').startsWith('en')) || null;
+}
+if ('speechSynthesis' in window){
+  enVoice = pickVoice();
+  speechSynthesis.addEventListener('voiceschanged', () => { enVoice = pickVoice(); });
+}
+
+function speakWord(word){
+  if (!('speechSynthesis' in window)) return;
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(word);
+    u.lang = 'en-US';
+    u.rate = 0.88;
+    u.pitch = 1;
+    if (enVoice) u.voice = enVoice;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
 function showPop(el){
   const word = el.textContent;
   const def = lookup(word);
   popB.textContent = word;
   popS.textContent = def || '（暂未收录）';
-  popI.textContent = '';
+  popI.textContent = ('speechSynthesis' in window) ? '' : '当前浏览器不支持发音';
   pop.hidden = false;
+  speakWord(word);
 
   const r = el.getBoundingClientRect();
   const pr = pop.getBoundingClientRect();
@@ -888,6 +922,11 @@ function showPop(el){
   activeW = el;
   el.classList.add('active');
 }
+
+document.getElementById('popSpeak').addEventListener('click', e => {
+  e.stopPropagation();
+  speakWord(popB.textContent);
+});
 
 panels.addEventListener('click', e => {
   const w = e.target.closest('.w');
