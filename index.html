@@ -934,7 +934,6 @@ yeartabs.addEventListener('click', e => {
   selectCase(b.dataset.case);
 });
 
-selectFamily(FAMILIES[0].id);
 
 /* 展开 / 收起应用 */
 const revealBtn = $('#revealBtn');
@@ -1466,6 +1465,9 @@ panels.addEventListener('click', e => {
   });
 })();
 
+
+/* 初始化：放在最后，确保 pop 等已定义 */
+selectFamily(FAMILIES[0].id);
 </script>
 </body>
 </html>
