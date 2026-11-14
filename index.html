@@ -77,8 +77,8 @@ body.show-app .btn.primary{background:var(--paper);color:var(--green)}
 .ybtn[aria-selected="true"]{background:var(--green);border-color:var(--green);color:#fff}
 .ybtn.off{opacity:.42;cursor:not-allowed}
 .ybtn.off:hover{border-color:var(--line);color:var(--sub)}
-.tabs{display:flex;gap:4px;padding:5px;background:var(--paper);border:1px solid var(--line);border-radius:99px;
-  width:fit-content;max-width:100%;overflow-x:auto;scrollbar-width:none;margin-bottom:22px}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;padding:6px;background:var(--paper);border:1px solid var(--line);border-radius:18px;
+  width:fit-content;max-width:100%;margin-bottom:22px}
 .tabs::-webkit-scrollbar{display:none}
 .tab{border:0;background:transparent;color:var(--sub);padding:9px 15px;border-radius:99px;font:14px/1 inherit;
   font-family:inherit;cursor:pointer;white-space:nowrap}
@@ -1005,6 +1005,904 @@ function plainCn(text){
   return text.replace(/\{\{(.+?)\}\}/g, '<span class="slot-pill">$1</span>');
 }
 
+const SMALL_TYPES = [
+ {
+  "type": "建议信",
+  "pages": "4-8",
+  "template": {
+   "salutation": "Dear Mr. Smith,",
+   "paras": [
+    "I hope everything is going well with you. Learning that you are planning to {{主题}}, I am writing to offer a few practical suggestions that I hope will prove helpful.",
+    "To begin with, special attention should be given to {{问题}}. It would be highly advisable for you to {{具体建议 1}}. In addition, were I in your position, I would {{具体建议 2}}, which can not only improve your efficiency but also avoid unnecessary detours, making your whole arrangement much smoother.",
+    "I hope these proposals will be of some value to you. Should you need further information, please feel free to contact me. I am looking forward to your favorable reply."
+   ],
+   "closing": "Yours sincerely,",
+   "signature": "Li Ming"
+  },
+  "templateCn": {
+   "salutation": "尊敬的史密斯先生：",
+   "paras": [
+    "希望您一切顺利。得知您计划{{主题}}，我写此信向您提供几点实用建议，希望能对您有所帮助。",
+    "首先，请务必重视{{问题}}。您最好采取{{具体建议 1}}这一做法。此外，如果我处在您的处境，我会{{具体建议 2}}。这样不仅可以提升效率，还能避免不必要的弯路，让整体安排更加顺畅。",
+    "希望以上建议能够对您有所参考。如果您需要更多信息，欢迎随时与我联系。期待您的回复。"
+   ],
+   "closing": "谨启",
+   "signature": "李明"
+  },
+  "cases": [
+   {
+    "year": 2024,
+    "exam": "英语一",
+    "topic": "建议信：如何准备口头报告",
+    "directions": "Read the following email from an international student and write a reply.\nDear Li Ming,\nI've got a class assignment to make an oral report on an ancient Chinese scientist, but I'm not sure how to prepare for it.\nCan you give me some advice? Thank you for your help.\nYours,\nPaul\nWrite your answer in about 100 words on the ANSWER SHEET.Do not use your own name in the email; use \"Li Ming\" instead.(10 points)",
+    "directionsCn": "阅读下面这封国际学生发来的电子邮件并写一封回信。\n亲爱的李明，\n我收到了一份课堂作业，需要做一个关于中国古代科学家的口头报告，但我不确定该如何准备。你能给我一些建议吗?感谢你的帮助。\n你的\n保罗\n请在答题纸上作答，字数约 100 词。\n不要在邮件中署自己的名字;用“李明”代替。(分值为 10 分)",
+    "app": {
+     "salutation": "Dear Paul,",
+     "paras": [
+      "I hope everything is going well with you. Learning that you are planning to {{make an oral report on an ancient Chinese scientist}}, I am writing to offer a few practical suggestions that I hope will prove helpful.",
+      "To begin with, special attention should be given to {{choosing a proper scientist}}. It would be highly advisable for you to {{pick one with representative achievements}}. In addition, were I in your position, I would {{watch some videos and attend related lectures}}, which can not only improve your efficiency but also avoid unnecessary detours, making your whole arrangement much smoother.",
+      "I hope these proposals will be of some value to you. Should you need further information, please feel free to contact me. I am looking forward to your {{favorable}} reply."
+     ],
+     "closing": "Yours sincerely,",
+     "signature": "Li Ming"
+    },
+    "appCn": {
+     "salutation": "亲爱的保罗：",
+     "paras": [
+      "希望你一切顺利。得知你打算做一场关于中国古代科学家的口头报告，我写这封信给你提几点实用建议，希望能够对你有所帮助。",
+      "首先，应特别注意选择一位合适的科学家。你最好挑选一位成就具有代表性的人物。此外，如果我处在你的位置，我会观看一些相关视频、听相关讲座。这不仅可以提升你的效率，还能避免走不必要的弯路，让你的整体准备工作更加顺利。",
+      "希望这些建议对你有参考意义。如果你需要更多信息，欢迎随时联系我。期待你的回信。"
+     ],
+     "closing": "谨启",
+     "signature": "李明"
+    }
+   },
+   {
+    "year": 2023,
+    "exam": "英语二",
+    "topic": "建议信：艺术展与机器人展的选择",
+    "directions": "An art exhibition and a robot show are to be held on Sunday and your friend David asks you which one he should go to. Write an email to\n1) make a suggestion, and\n2) give your reasons.\nWrite your answer in about 100 words on the ANSWER SHEET.\nDo not use your own name in your email, use \"Li Ming\" instead.",
+    "directionsCn": "周日将举办艺术展和机器人展，你的朋友大卫问他应该去哪一个。写一封电子邮件\n1）提出建议，以及\n2）给出你的理由。\n在答题纸上用大约 100 个单词写下您的答案。\n不要在电子邮件中使用自己的名字，而使用“李明”。",
+    "app": {
+     "salutation": "Dear David,",
+     "paras": [
+      "I hope everything is going well with you. Learning that you are planning to {{choose between the art exhibition and the robot show this Sunday}}, I am writing to offer a few practical suggestions that I hope will prove helpful.",
+      "To begin with, special attention should be given to {{your personal interest}}. It would be highly advisable for you to {{attend the robot show}}. In addition, were I in your position, I would {{enjoy its interactive activities}}, which can not only improve your {{experience}} but also {{bring you great pleasure}}, making your whole {{visit}} much smoother.",
+      "I hope these proposals will be of some value to you. Should you need further information, please feel free to contact me. I am looking forward to your {{favorable}} reply."
+     ],
+     "closing": "Yours sincerely,",
+     "signature": "Li Ming"
+    },
+    "appCn": {
+     "salutation": "亲爱的戴维：",
+     "paras": [
+      "希望你一切顺利。得知你打算在本周日的艺术展和机器人展二者之间做选择，我特此写信提供几条实用建议，希望可以对你有所帮助。",
+      "首先，应特别关注你的个人兴趣。你最好去参观机器人展。此外，如果我处在你的处境，我会去体验它的互动项目，这不仅可以提升你的参观体验，还能带给你莫大的乐趣，让你的整场游玩更加顺畅。",
+      "希望这些建议能给你带来参考。如果你还需要更多信息，欢迎随时联系我。期待你的回信。"
+     ],
+     "closing": "谨启",
+     "signature": "李明"
+    }
+   },
+   {
+    "year": 2021,
+    "exam": "英语一",
+    "topic": "建议信：为外国朋友在中国求职提建议",
+    "directions": "A foreign friend of yours has recently graduated from college and intends to find a job in China. Write him or her an email to make some suggestions.\nYou should write about 100 words on ANSWER SHEET 2.\nDo not sign your own name at end. Use \"Li Ming\" instead.\nYou do not need to write the address. (10 points)",
+    "directionsCn": "你的一个外国朋友最近大学毕业并想在中国找一份工作。请给他或她写一封邮件来给出一些建议。\n在答题纸 2 上写一封大约 100 字的文章\n不要用自己的名字署名，改用李明\n你不需要写地址",
+    "app": {
+     "salutation": "Dear {{friend}},",
+     "paras": [
+      "I hope everything is going well with you. Learning that you are planning to {{find a job in China}}, I am writing to offer a few practical suggestions that I hope will prove helpful.",
+      "To begin with, special attention should be given to {{your career orientation}}. It would be highly advisable for you to {{polish your resume in line with local job requirements}}. In addition, were I in your position, I would {{take part in online recruitment fairs}}, which can not only improve your efficiency but also avoid unnecessary detours, making your whole {{job-hunting process}} much {{more productive}}.",
+      "I hope these proposals will be of some value to you. Should you need further information, please feel free to contact me. I am looking forward to your {{favorable}} reply."
+     ],
+     "closing": "Yours sincerely,",
+     "signature": "Li Ming"
+    },
+    "appCn": {
+     "salutation": "亲爱的朋友：",
+     "paras": [
+      "希望你一切顺利。得知你打算在中国找一份工作，我写此信给出几点实用建议，希望能够对你有所帮助。",
+      "首先，你应当重点关注自己的职业定位。你最好按照国内岗位要求打磨个人简历。此外，如果我处在你的处境，我会参加线上招聘会。这不仅能提升求职效率，还可以避开不必要的弯路，让你的整个求职过程更富有成效。",
+      "希望这些建议能对你有参考意义。如果你需要更多信息，欢迎随时与我联系。期待你的回信。"
+     ],
+     "closing": "谨启",
+     "signature": "李明"
+    }
+   },
+   {
+    "year": 2007,
+    "exam": "英语一",
+    "topic": "建议信：改善大学图书馆服务",
+    "directions": "Write a letter to your university library, making suggestions for improving its service.\nYou should write about 100 words on ANSWER SHEET2.\nDo not sign your own name at the end of the letter. Use \"Li Ming\" instead.\nDo not write the address. (10 points)",
+    "directionsCn": "给你的大学图书馆写一封信，提出改善其服务的建议。\n在答题纸 2 上写一封大约 100 字的文章\n不要用自己的名字署名，改用李明\n你不需要写地址",
+    "app": {
+     "salutation": "Dear Sir or Madam,",
+     "paras": [
+      "I am a senior student from the School of Mechanical Engineering at our university. Learning that you are planning to {{improve the service of our university library}}, I am writing to offer a few practical suggestions that I hope will prove helpful. (While the service you have provided seems wonderful, there is still room for enhancement.)",
+      "To begin with, special attention should be given to {{the shortage of electronic resources}}. It would be highly advisable for you to {{purchase more digital academic databases}}. In addition, were I in your position, I would {{extend the opening hours on weekends}}, which can not only {{satisfy students' study demands}} but also {{bring greater convenience to readers}}.",
+      "I hope these proposals will be of some value to you. Should you need further information, please feel free to contact me. I am looking forward to your favorable reply."
+     ],
+     "closing": "Yours sincerely,",
+     "signature": "Li Ming"
+    },
+    "appCn": {
+     "salutation": "尊敬的先生/女士：",
+     "paras": [
+      "我是本校机械工程学院的一名大四学生。得知贵校计划改善我校图书馆的服务，我特此写信提出几条切实可行的建议，希望能够有所帮助。（尽管目前提供的服务已经很不错，但仍有提升空间。）",
+      "首先，应当重点关注电子资源不足的问题。建议采购更多数字学术数据库。此外，如果我处在您的立场，我会延长周末开放时间。这既可以满足学生的学习需求，也能给读者带来更大便利。",
+      "希望以上建议能够供您参考。如果需要进一步了解相关情况，欢迎随时与我联系。期待您的佳音。"
+     ],
+     "closing": "谨启",
+     "signature": "李明"
+    }
+   }
+  ]
+ },
+ {
+  "type": "邀请信",
+  "pages": "9-13",
+  "template": {
+   "salutation": "Dear Mr. Smith,",
+   "paras": [
+    "On behalf of the Student Union, I am writing to cordially invite you to participate in {{具体活动}}, which is scheduled to be held at the auditorium on October 20th.",
+    "The event is intended to enrich students' extracurricular life and broaden their horizons. Given your remarkable achievements and rich experience in {{领域}}, we are firmly convinced that your presence will not only inspire all participants but also contribute greatly to the success of the activity. During the event, we would be honored to invite you to {{受邀者角色}}. In addition, we have arranged {{可选补充具体内容}}, which we believe will be of great value to all attendees.",
+    "We would be very grateful if you could kindly accept our invitation. Please let us know your decision at your earliest convenience. We look forward to your favorable reply."
+   ],
+   "closing": "Yours sincerely,",
+   "signature": "Li Ming"
+  },
+  "templateCn": {
+   "salutation": "尊敬的史密斯先生：",
+   "paras": [
+    "我谨代表学生会，诚挚邀请您参加{{具体活动}}，该活动定于 10 月 20 日在礼堂举办。",
+    "本次活动旨在丰富学生的课余生活，拓宽他们的视野。鉴于您在{{领域}}取得的卓越成就与丰富经验，我们坚信您的到场不仅能够激励所有参与者，还将为本次活动的圆满举行贡献重要力量。活动期间，我们有幸邀请您担任{{受邀者角色}}。此外，我们已筹备{{可选补充具体内容}}，相信这对所有参会人员都大有帮助。",
+    "倘若您能够欣然接受我们的邀请，我们将不胜感激。请在您方便时尽早告知我们您的决定。期待您的佳音。"
+   ],
+   "closing": "谨启",
+   "signature": "李明"
+  },
+  "cases": [
+   {
+    "year": 2022,
+    "exam": "英语一",
+    "topic": "邀请信：邀请英国大学教授组队参加国际创新竞赛",
+    "directions": "Write an email to a professor at a British university, inviting him/her to organize a team for the international innovation contest to be held at your university.\nYou should write about 100 words on the ANSWER SHEET 2.\nDo not use your own name. Use \"Li Ming\" instead. (10 points)",
+    "directionsCn": "给英国一所大学的教授写一封电子邮件，邀请他/她组织一个团队参加将在你的大学举行的国际创新竞赛。\n你应该在答题纸 2 上写大约 100 个单词。\n不要使用自己的名字。用“李明”代替。",
+    "app": {
+     "salutation": "Dear {{Professor Smith}},",
+     "paras": [
+      "On behalf of the Student Union, I am writing to cordially invite you to participate in {{the international innovation contest}}, which is scheduled to be held at the auditorium in {{our university}} on October 20th.",
+      "The event is intended to enrich students' extracurricular life and broaden their horizons. Given your remarkable achievements and rich experience in {{innovative research}}, we are firmly convinced that your presence will not only inspire all participants but also contribute greatly to the success of the activity. During the event, we would be honored to invite you to {{organize a competing team for the contest}}. In addition, we have arranged {{necessary supporting resources for each team}}, which we believe will be of great value to all attendees.",
+      "We would be very grateful if you could kindly accept our invitation. Please let us know your decision at your earliest convenience. We look forward to your favorable reply."
+     ],
+     "closing": "Yours sincerely,",
+     "signature": "Li Ming"
+    },
+    "appCn": {
+     "salutation": "尊敬的史密斯教授：",
+     "paras": [
+      "我谨代表学生会，诚挚邀请您参加本次国际创新大赛。比赛定于 10 月 20 日在我校礼堂举办。",
+      "本次活动旨在丰富学生的课余生活、拓宽学生视野。鉴于您在创新研究领域成果斐然、经验丰富，我们坚信，您的出席不仅能够激励全体参赛选手，也将为本次活动的成功举办做出重要贡献。活动期间，我们很荣幸邀请您组建一支队伍参加比赛。此外，我们已经为各支队伍配备了必要的配套资源，相信这会对所有参与者大有裨益。",
+      "若您能够欣然接受本次邀请，我们将不胜感激。烦请在方便之时尽早告知我们您的决定。期待您的佳音。"
+     ],
+     "closing": "谨启",
+     "signature": "李明"
+    }
+   },
+   {
+    "year": 2021,
+    "exam": "英语二",
+    "topic": "邀请信：邀请国际学生参加线上会议",
+    "directions": "Suppose you are organizing an online meeting. Write an email to Jack, an international student.\n(1) invite him to participate, and\n(2) tell him the details\nYou should write neatly on ANSWER SHEET.\nDo not sign your own name at the end of the e-mail. Use \"Li Ming\" instead. (10 points)",
+    "directionsCn": "假设你正在组织一场线上会议，给国际学生 Jack 写一封邮件\n（1）邀请他参加\n（2）告知他细节\n把答案写在答题纸上。\n不要在邮件末尾用自己的名字，改用“李明”",
+    "app": {
+     "salutation": "Dear {{Jack}},",
+     "paras": [
+      "On behalf of the Student Union, I am writing to cordially invite you to participate in {{our online meeting}}, which is scheduled to be held on {{Zoom}} on October 20th.",
+      "The event is intended to enrich students' extracurricular life and broaden their horizons. Given your remarkable achievements and rich experience in {{cross-cultural communication}}, we are firmly convinced that your presence will not only inspire all participants but also contribute greatly to the success of the activity. During the event, we would be honored to invite you to {{give a short presentation and share your experience}}. In addition, we have arranged {{relevant meeting documents in advance}}, which we believe will be of great value to all attendees.",
+      "We would be very grateful if you could kindly accept our invitation. Please let us know your decision at your earliest convenience. We look forward to your {{favorable}} reply."
+     ],
+     "closing": "Yours sincerely,",
+     "signature": "Li Ming"
+    },
+    "appCn": {
+     "salutation": "亲爱的杰克：",
+     "paras": [
+      "我谨代表学生会，诚挚邀请您参加我们的线上会议，会议定于 10 月 20 日在 Zoom 平台举行。",
+      "本次活动旨在丰富同学们的课余生活、拓宽大家的视野。鉴于您在跨文化交流方面成果突出、经验丰富，我们坚信您的参与不仅能够激励全体参会人员，还会极大助力本次活动圆满开展。会议期间，我们恳请您做简短发言并分享个人经验。此外，我们已经提前准备好相关会议文件，相信这对所有参会者都会大有帮助。",
+      "如果您能够接受本次邀请，我们将不胜感激。请在方便之时尽早告知我们您的答复。期待您的佳音。"
+     ],
+     "closing": "谨启",
+     "signature": "李明"
+    }
+   },
+   {
+    "year": 2013,
+    "exam": "英语一",
+    "topic": "邀请信：邀请外教担任英语演讲比赛评委",
+    "variant": "直接套用",
+    "directions": "Write an e-mail of about 100 words to a foreign teacher in your college, inviting him/her to be a judge for the upcoming English speech contest.\nYou should include the details you think necessary.\nYou should write neatly on the ANSWER SHEET.\nDo not sign your own name at the end of the e-mail. Use \"Li Ming\" instead.\nDo not write the address.(10 points)",
+    "directionsCn": "给你的大学里的一位外教写一封约 100 词的电子邮件，邀请他/她担任即将举行的英语演讲比赛的评委。\n你应该包含你认为必要的细节。\n你应该在答题纸上书写工整。\n不要在邮件末尾署自己的名字，改用“李明”代替。\n不要写地址。(10 分)",
+    "app": {
+     "salutation": "Dear Mr. Smith,",
+     "paras": [
+      "On behalf of the Student Union, I am writing to cordially invite you to participate in {{the upcoming English speech contest}}, which is scheduled to be held at the auditorium on October 20th.",
+      "The event is intended to enrich students' extracurricular life and broaden their horizons. Given your remarkable achievements and rich experience in {{English teaching}}, we are firmly convinced that your presence will not only inspire all participants but also contribute greatly to the success of the activity. During the event, we would be honored to invite you to {{serve as one of the judges}}. In addition, we have arranged {{contest rules and scoring standards in advance}}, which we believe will be of great value to all attendees.",
+      "We would be very grateful if you could kindly accept our invitation. Please let us know your decision at your earliest convenience. We look forward to your favorable reply."
+     ],
+     "closing": "Yours sincerely,",
+     "signature": "Li Ming"
+    },
+    "appCn": {
+     "salutation": "尊敬的史密斯先生：",
+     "paras": [
+      "我谨代表学生会，诚挚邀请您参加即将举办的英语演讲比赛，比赛定于 10 月 20 日在礼堂举行。",
+      "本次活动旨在丰富学生课余生活，拓宽同学们的视野。鉴于您在英语教学领域成就卓著、经验丰富，我们坚信您的到场不仅能够激励全体参赛选手，也将极大保障本次活动圆满开展。活动期间，我们很荣幸邀请您担任评委之一。此外，我们已经提前安排好比赛规则和评分标准，相信这对所有参会者都会大有帮助。",
+      "如果您能够接受本次邀请，我们将不胜感激。请在方便之时尽早告知我们您的决定。期待您的佳音。"
+     ],
+     "closing": "谨启",
+     "signature": "李明"
+    }
+   }
+  ]
+ },
+ {
+  "type": "推荐信",
+  "pages": "14-17",
+  "template": {
+   "salutation": "Dear Mr. Smith,",
+   "paras": [
+    "How are you getting on recently? I am writing to recommend / introduce {{推荐或介绍对象}} to you, an exceptional {{对象属性(如 book /candidate/scenic spot /campus activity)}} that I have known in depth for a long time.",
+    "To start with, {{推荐或介绍对象}} boasts remarkable advantages in {{领域(如 professional capability /cultural connotation /practical value)}}. Furthermore, it has gained widespread acclaim and a fine reputation for its unique features {{(也可以具体特征，如 its outstanding academic quality /its unique historical charm)}}. With first-hand experience and full awareness of its strengths, I am confident that it will be an ideal choice for you.",
+    "I sincerely hope the information above will be of great assistance to you. Should you need more specific details, please do not hesitate to reach out to me."
+   ],
+   "closing": "Yours sincerely,",
+   "signature": "Li Ming"
+  },
+  "templateCn": {
+   "salutation": "尊敬的史密斯先生：",
+   "paras": [
+    "近来一切可好？我写此信向您推荐/介绍推荐或介绍对象，它是一项出众的对象属性(如书籍/候选人/景点/校园活动)，我对此已经了解许久。",
+    "首先，推荐或介绍对象在领域(如专业能力、文化内涵、实用价值)方面具备突出优势。此外，它凭借自身独有的特质（也可写具体特点，例如出众的学术水准、独特的历史魅力）收获广泛赞誉与良好口碑。凭借亲身接触的经历，我十分清楚它的各项长处，因此我确信它会是您的理想之选。",
+    "我由衷希望以上信息能够对您有所帮助。倘若您需要更多具体细节，请随时与我取得联系。"
+   ],
+   "closing": "谨启",
+   "signature": "李明"
+  },
+  "cases": [
+   {
+    "year": 2026,
+    "exam": "英语一",
+    "topic": "介绍信：向朋友保罗介绍中国家庭的手写信件",
+    "directions": "Read the following email from your friend Paul and write him a reply.\nHi Li Ming,\nI was really moved by the Chinese families' handwritten letters you posted yesterday. They are priceless! Could you please tell me a bit more about them? And are they currently on public display somewhere? I'm very keen to see them in person. Thanks.\nYours,\nPaul\nYou should write about 100 words on the ANSWER SHEET.\nDo not use your own name in the email; use \"Li Ming\" instead.(10 points)",
+    "directionsCn": "阅读你的朋友保罗发来的如下邮件，给他写一封回信。\n嗨，李明：\n你昨天分享的那些中国家庭的手写信件令我十分感动。它们弥足珍贵！你能否跟我再多讲讲这些信件？另外，这些信件目前是否在某处公开展出？我非常希望能够亲眼看一看。谢谢。\n你的朋友：保罗\n你应在答题纸上写大约 100 词。\n邮件中不要使用你本人的名字，请用 “李明” 代替。",
+    "app": {
+     "salutation": "Dear Paul,",
+     "paras": [
+      "How are you getting on recently? I am writing to introduce {{the handwritten letters from Chinese families}} to you, an exceptional {{collection}} that I have known in depth for a long time.",
+      "To start with, {{the collection}} boasts remarkable advantages in {{cultural connotation and emotional value}}. Furthermore, it has gained widespread acclaim and a fine reputation for its unique features, such as sincere language and touching family stories. At present, it is on public display at the City Museum until the end of this month. With first-hand experience and full awareness of its strengths, I am confident that a visit will be an ideal choice for you.",
+      "I sincerely hope the information above will be of great assistance to you. Should you need more specific details, please do not hesitate to reach out to me."
+     ],
+     "closing": "Yours sincerely,",
+     "signature": "Li Ming"
+    },
+    "appCn": {
+     "salutation": "亲爱的保罗：",
+     "paras": [
+      "你近来一切可好？我写这封信向你介绍这些中国家庭的手写信件，这是一套我长期深入了解过的珍贵藏品。",
+      "首先，这批藏品拥有突出的文化内涵与情感价值。此外，它凭借质朴真挚的文字、感人的家庭故事等独有特色，收获了广泛赞誉与良好口碑。目前该展品正在市博物馆公开展览，展期持续至本月底。基于亲身了解，我确信前去参观对你而言会是很好的选择。",
+      "我由衷希望以上信息能够对你有所帮助。如果你需要更多具体详情，欢迎随时联系我。"
+     ],
+     "closing": "谨启",
+     "signature": "李明"
+    }
+   },
+   {
+    "year": 2025,
+    "exam": "英语一",
+    "topic": "介绍信：向同学保罗介绍校园手工技艺展示活动",
+    "directions": "Read the following email from your classmate Paul and write him a reply.\nDear Li Ming\nI was really excited to hear that you'd invite some young craftsmen to demonstrate their innovative craft-making on campus.\nMay I know more about what they will show?\nAlso, I'd like to help you with your preparation work. Please let me know what I can do.\nYours,\nPaul\nWrite your answer in about 100 words on the ANSWER SHEET\nDo not use your own name in the email; use \"Li Ming\" instead. (10 points)",
+    "directionsCn": "阅读以下同学 Paul 发来的邮件，并给他回复，\n亲爱的李明，\n听说你要邀请一些年轻的手工艺人来校园展示他们的创新手工艺制作，我感到非常兴奋。能否告诉我他们会展示些什么内容？\n另外，我也很乐意帮忙做准备工作，\n请告诉我我能做些什么。\n你的保罗\n请在答题纸上用大约 100 词作答。\n在邮件中不要使用你自己的名字，使用 “李明” 代替。",
+    "app": {
+     "salutation": "Dear Paul,",
+     "paras": [
+      "How are you getting on recently? I am writing to introduce {{the craft-making demonstration activity}} to you, an exceptional {{campus event}} that I have known in depth for a long time.",
+      "To start with, {{this activity}} boasts remarkable advantages in {{traditional handicraft inheritance}}. Furthermore, it has gained widespread acclaim and a fine reputation for its unique creative craft works. With first-hand experience and full awareness of its strengths, I am confident that it will be an ideal opportunity for you to offer help, such as preparing relevant site materials for the demonstration.",
+      "I sincerely hope the information above will be of great assistance to you. Should you need more specific details, please do not hesitate to reach out to me."
+     ],
+     "closing": "Yours sincerely,",
+     "signature": "Li Ming"
+    },
+    "appCn": {
+     "salutation": "亲爱的保罗：",
+     "paras": [
+      "你最近过得怎么样？我写这封信向你介绍手工技艺展示活动，这是一项我了解许久的精彩校园活动。",
+      "首先，该活动在传承传统手工艺方面具备突出优势。此外，活动凭借独具创意的手工作品收获了广泛赞誉与良好口碑。由于我亲身参与过，十分清楚它的各项优势，我相信对你而言这是一个可以出力帮忙的绝佳机会，比如为本次展示活动筹备相关现场物料。",
+      "我衷心希望以上信息能够对你大有帮助。如果你需要更多具体细节，请随时联系我。"
+     ],
+     "closing": "谨启",
+     "signature": "李明"
+    }
+   },
+   {
+    "year": 2017,
+    "exam": "英语一",
+    "topic": "推荐信：向澳大利亚教授库克推荐本市旅游景点（故宫博物院）",
+    "directions": "You are to write an email to James Cook, a newly-arrived Australian professor, recommending some tourist attraction in your city, please give reasons for your recommendation.\nWrite your letter with no less than 100 words. Write it neatly on ANSWER SHEET.\nDo not sign your own name at the end of the letter. Use \"Li Ming\" instead.\nYou do not need to write the address. (10 points)",
+    "app": {
+     "salutation": "Dear Professor Cook,",
+     "paras": [
+      "I am a senior student from Peking University and I am writing to recommend {{the Palace Museum}} to you, an exceptional {{tourist attraction}} that I have known in depth for a long time.",
+      "To start with, {{the Palace Museum}} boasts remarkable advantages in {{historical and cultural connotation}}. Furthermore, it has gained widespread acclaim and a fine reputation for its unique ancient architectural charm and precious imperial collections. With first-hand experience and full awareness of its strengths, I am confident that it will be an ideal choice for you to get close to traditional Chinese culture in your spare time.",
+      "I sincerely hope the information above will be of great assistance to you. Should you need more specific details, please do not hesitate to reach out to me."
+     ],
+     "closing": "Yours sincerely,",
+     "signature": "Li Ming"
+    },
+    "appCn": {
+     "salutation": "尊敬的库克教授：",
+     "paras": [
+      "我是北京大学的一名大四学生。我写信向您推荐故宫博物院，这是一处我了解许久的绝佳旅游胜地。",
+      "首先，故宫博物院拥有深厚的历史文化底蕴。此外，它凭借独特的古建筑魅力与珍贵的皇家馆藏收获了广泛赞誉与良好口碑。我亲身去过那里，十分了解它的亮点，我相信这会是您闲暇时间近距离感受中国传统文化的理想去处。",
+      "我衷心希望以上信息能够对您有所帮助。倘若您需要更多具体细节，欢迎随时与我联系。"
+     ],
+     "closing": "谨启",
+     "signature": "李明"
+    }
+   }
+  ]
+ },
+ {
+  "type": "投诉信",
+  "pages": "18-19",
+  "template": {
+   "salutation": "Dear Mr. Smith,",
+   "paras": [
+    "I am writing to lodge a formal complaint about {{投诉对象}} I purchased/experienced from your shop {{具体时间}}. Having expected a qualified product and reliable service, I am regretful to find that it has fallen short of my expectations due to the following issues.",
+    "To begin with, {{问题}}, which has caused me considerable inconvenience. In addition, I have reached out to your customer service team via both hotline and email several times since the problem occurred, yet no effective response has been provided so far, which has further worsened my dissatisfaction.",
+    "I would highly appreciate it if you could address this matter promptly. I look forward to your early and positive reply."
+   ],
+   "closing": "Yours sincerely,",
+   "signature": "Li Ming"
+  },
+  "templateCn": {
+   "salutation": "尊敬的史密斯先生：",
+   "paras": [
+    "我写这封信正式投诉我于具体时间在贵店购买/体验的投诉对象。我原本期待得到合格的产品与可靠的服务，但遗憾的是，由于以下问题，它并未达到我的预期。",
+    "首先，问题，这给我带来了极大不便。此外，问题发生之后，我已经多次通过热线电话和邮件联系贵方客服部门，但至今没有得到有效的答复，这进一步加剧了我的不满。",
+    "如果贵方能尽快处理此事，我将不胜感激。期待您尽早给出积极的回复。"
+   ],
+   "closing": "谨启",
+   "signature": "李明"
+  },
+  "cases": [
+   {
+    "year": 2012,
+    "exam": "英语二",
+    "topic": "投诉信：就网购电子词典出现故障向客服中心投诉",
+    "directions": "Suppose you have found something wrong with the electronic dictionary that you bought from an online store the other day, write an email to the customer service center to\n1）make a complaint and\n2）demand a prompt solution\nYou should write about 100 words on ANSWER SHEET 2\nDo not sign your own name at the end of the letter. Use \"Zhang Wei\" instead.",
+    "directionsCn": "假设你目前从网上商店购买的电子词典出现了故障，那么请给客服中心写一封电子邮件：\n1）提出投诉\n2）要求立即解决\n请在答题纸 2 上撰写约 100 个单词的内容。\n信的末尾不要签上你的名字。用 “张伟” 代替。",
+    "app": {
+     "salutation": "Dear Manager,",
+     "paras": [
+      "I am writing to lodge a formal complaint about {{the electronic dictionary}} I purchased from your online store the other day. Having expected a qualified product and reliable service, I am regretful to find that it has fallen short of my expectations due to the following issues.",
+      "To begin with, {{the product broke down within only two days of use}}, which has caused me considerable inconvenience. In addition, I have reached out to your customer service team via both hotline and email several times since the problem occurred, yet no effective response has been provided so far, which has further worsened my dissatisfaction.",
+      "I would highly appreciate it if you could address this matter promptly. I look forward to your early and positive reply."
+     ],
+     "closing": "Yours sincerely,",
+     "signature": "Zhang Wei"
+    },
+    "appCn": {
+     "salutation": "尊敬的经理：",
+     "paras": [
+      "我写此信正式投诉我前几日在贵网店购买的电子词典。我本期待收到质量合格的产品以及可靠的服务，但令人遗憾的是，由于下述问题，该商品并未达到我的预期。",
+      "首先，该产品仅使用两天就出现故障，给我带来了极大的不便。另外，问题出现后，我已经通过热线电话和电子邮件多次联系贵方客服，可至今没有收到有效的答复，这进一步加重了我的不满。",
+      "如果您能够尽快处理此事，我将不胜感激。期待您尽早给予积极回复。"
+     ],
+     "closing": "谨启",
+     "signature": "张伟"
+    }
+   }
+  ]
+ },
+ {
+  "type": "道歉信",
+  "pages": "20-21",
+  "template": {
+   "salutation": "Dear Mr. Smith,",
+   "paras": [
+    "I am writing to offer my heartfelt apology for {{具体过失事件}}. I take full responsibility for this oversight, and I deeply regret the inconvenience it has caused to you.",
+    "Much as I had made thorough preparations in advance, an unforeseen situation arose that prevented me from fulfilling my commitment as scheduled. To make up for my fault, I would like to {{补救措施}}. I assure you that such a situation will never occur again.",
+    "Once again, please accept my sincere apology for any inconvenience caused. I would appreciate it if you could kindly understand my situation, and I hope we can continue our pleasant cooperation/friendship."
+   ],
+   "closing": "Yours sincerely,",
+   "signature": "Li Ming"
+  },
+  "templateCn": {
+   "salutation": "尊敬的史密斯先生：",
+   "paras": [
+    "我写此信，为具体过失事件向您致以诚挚的歉意。我对这次疏忽承担全部责任，对于此事给您造成的不便，我深感愧疚。",
+    "尽管我事先已做好充分准备，但突发意外状况，使我无法如期履行约定。为弥补我的过失，我想要补救措施。我向您保证，此类情况绝不会再次发生。",
+    "对于由此带来的种种不便，请再次接受我诚挚的歉意。倘若您能够体谅我的处境，我将不胜感激，希望我们能够继续保持愉快的合作 / 友谊。"
+   ],
+   "closing": "谨启",
+   "signature": "李明"
+  },
+  "cases": [
+   {
+    "year": 2018,
+    "exam": "英语二",
+    "topic": "道歉信：因取消旅行计划无法按计划拜访史密斯教授致歉",
+    "directions": "Suppose you have to cancel your travel plan and will not be able to visit Professor Smith. Write him an email, you should\n1) Apologize and explain situation, and\n2) Suggest a future meeting time.\nWrite your letter with no less than 100 words. Write it neatly on the ANSWER SHEET.\nDo not sign your own name at the end of the letter. Use \"Li Ming\" instead.\nYou do not need to write the address. (10 points)",
+    "app": {
+     "salutation": "Dear Professor Smith,",
+     "paras": [
+      "I am writing to offer my heartfelt apology for {{canceling my travel plan and failing to pay you a visit as planned}}. I take full responsibility for this oversight, and I deeply regret the inconvenience it has caused to you.",
+      "Much as I had made thorough preparations in advance, an unforeseen situation arose that prevented me from fulfilling my commitment as scheduled. To make up for my fault, I would like to {{suggest arranging another meeting time in the coming month}}. I assure you that such a situation will never occur again.",
+      "Once again, please accept my sincere apology for any inconvenience caused. I would appreciate it if you could kindly understand my situation, and I hope we can continue our pleasant friendship."
+     ],
+     "closing": "Yours sincerely,",
+     "signature": "Li Ming"
+    },
+    "appCn": {
+     "salutation": "尊敬的史密斯教授：",
+     "paras": [
+      "我写这封信，为我取消出行计划、未能按计划登门拜访您致以诚挚的歉意。我对这次疏忽承担全部责任，对于此事给您造成的不便，我深感愧疚。",
+      "尽管我事先已经做了充分准备，但突发意外状况，导致我无法按约定履行承诺。为弥补我的过失，我希望可以安排在下个月另约会面时间。我向您保证，此类情况绝不会再次发生。",
+      "对于由此带来的不便，请再次接受我诚挚的歉意。若您能够体谅我的处境，我将不胜感激，也希望我们可以继续保持这份融洽的情谊。"
+     ],
+     "closing": "谨启",
+     "signature": "李明"
+    }
+   }
+  ]
+ },
+ {
+  "type": "辞职信",
+  "pages": "22-23",
+  "template": {
+   "salutation": "Dear Mr. Smith,",
+   "paras": [
+    "I am writing to formally tender my resignation from the position of {{职位}}, which I have held since {{入职时间点}}/ for {{入职时间段}}. I would like to express my sincere gratitude to you and the whole team for offering me this precious work opportunity.",
+    "However, after careful and thorough consideration, I have made the difficult decision to leave my current post. For one thing, I intend to pursue a career path that aligns more closely with my long-term academic training and professional goals. For another, I hope to seek broader platforms and more challenging opportunities to achieve further breakthroughs in my professional capability.",
+    "I sincerely apologize for any inconvenience that my resignation may cause. Thank you again for your understanding and trust, and I wish the organization continued success in the future."
+   ],
+   "closing": "Yours sincerely,",
+   "signature": "Li Ming"
+  },
+  "templateCn": {
+   "salutation": "尊敬的史密斯先生：",
+   "paras": [
+    "我写此信正式辞去职位一职，我自入职时间起担任该岗位/我已担任该岗位时间段。我向您以及整个团队致以诚挚谢意，感谢为我提供这份宝贵的工作机会。",
+    "然而，经过慎重周全的考量，我艰难地决定离开现有岗位。一方面，我希望追求一条与我长期专业积累和职业目标更为契合的职业道路；另一方面，我期望寻找更广阔的平台与更富挑战性的机遇，让自身专业能力实现进一步突破。",
+    "对于我的离职可能带来的不便，我深表歉意。再次感谢您的理解与信任，祝愿本单位未来蒸蒸日上。"
+   ],
+   "closing": "谨启",
+   "signature": "李明"
+  },
+  "cases": [
+   {
+    "year": 2005,
+    "exam": "英语一",
+    "topic": "辞职信：向老板王先生辞去《设计与时尚》杂志编辑一职",
+    "directions": "Two months ago you got a job as an editor for the magazine Designs & Fashions.But now you find that the work is not what you expected. You decide to quit. Write a letter to your boss, Mr. Wang, telling him your decision, stating your reason(s), and making an apology.\nWrite your letter with no less than 100 words. Write it neatly on ANSWER SHEET 2.\nDo not sign your own name at the end of the letter. Use \"Li Ming\" instead.\nYou do not need to write the address.",
+    "app": {
+     "salutation": "Dear Mr. Wang,",
+     "paras": [
+      "I am writing to formally tender my resignation from the position of {{an editor for the magazine Designs & Fashions}}, which I have held for {{two months}}. I would like to express my sincere gratitude to you and the whole team for offering me this precious work opportunity.",
+      "However, after careful and thorough consideration, I have made the difficult decision to leave my current post. For one thing, I intend to pursue a career path that aligns more closely with my long-term academic training and professional goals. For another, I hope to seek broader platforms and more challenging opportunities to achieve further breakthroughs in my professional capability.",
+      "I sincerely apologize for any inconvenience that my resignation may cause. Thank you again for your understanding and trust, and I wish the organization continued success in the future."
+     ],
+     "closing": "Yours sincerely,",
+     "signature": "Li Ming"
+    },
+    "appCn": {
+     "salutation": "尊敬的王先生：",
+     "paras": [
+      "我写此信正式申请辞去《设计与时尚》杂志编辑一职，我已担任该岗位两个月。我谨向您以及整个团队表达诚挚谢意，感谢给予我这份宝贵的工作机会。",
+      "然而，经过慎重周全的考虑，我艰难地决定离开目前的岗位。一方面，我打算从事一份与我长期的学术背景和职业目标更加契合的事业。另一方面，我希望寻求更广阔的平台以及更具挑战性的机遇，让自己的专业能力取得进一步突破。",
+      "对于我的离职可能带来的不便，我致以诚挚歉意。再次感谢您的理解与信任，祝愿单位未来蒸蒸日上。"
+     ],
+     "closing": "谨启",
+     "signature": "李明"
+    }
+   }
+  ]
+ },
+ {
+  "type": "感谢信",
+  "pages": "24-25",
+  "kind": "letter",
+  "template": {
+   "salutation": "Dear Mr. Smith,",
+   "paras": [
+    "I am writing to convey my most heartfelt gratitude to you for your generous help and selfless support when {{具体情境}}. Your warm support and generous help during {{时间段/事件}} meant a great deal to me.",
+    "It was your patient guidance and constant encouragement that enabled me to overcome the obstacles and achieve a satisfying outcome. What strikes me most is your {{品质（如 rigorous academic attitude/sincere and warm kindness）}}, which has not only left a lasting impression on me but also taught me the true meaning of dedication and mutual help.",
+    "Once again, please accept my sincere appreciation for everything you have done for me. I sincerely hope that I will have the opportunity to repay your kindness in the future. Wish you all the best."
+   ],
+   "closing": "Yours sincerely,",
+   "signature": "Li Ming"
+  },
+  "templateCn": {
+   "salutation": "尊敬的史密斯先生：",
+   "paras": [
+    "我写此信向您致以最诚挚的谢意，感谢您在具体情境下给予我的慷慨帮助与无私支持。在时间段/事件期间，您热忱的扶持与鼎力相助对我意义非凡。",
+    "正是您耐心的指导与始终如一的鼓励，使我得以克服重重阻碍，收获令人满意的结果。最令我感触深刻的是您的品质（如严谨的治学态度、真挚热忱的善意），这不仅给我留下了难以磨灭的印象，更让我领悟到奉献与互助的真正意义。",
+    "请再次接受我对您所付出一切的由衷感激。我衷心希望今后有机会回报您的善意。祝您万事顺遂。"
+   ],
+   "closing": "谨启",
+   "signature": "李明"
+  },
+  "cases": [
+   {
+    "year": 2010,
+    "exam": "英语二",
+    "topic": "感谢信：感谢美国同事的热情接待，并欢迎其在合适的时候来中国访问",
+    "directions": "You have just come back from the U.S. as a member of a Sino-American cultural exchange program. Write a letter to your American colleague to 1) Express your thanks for his/her warm reception; 2) Welcome him/her to visit China in due course. You should write about 100 words on ANSWER SHEET 2. Do not sign your own name at the end of the letter. Use \"Zhang Wei\" instead. Do not write your address. (10 points)",
+    "directionsCn": null,
+    "app": {
+     "salutation": "Dear Mr. Smith,",
+     "paras": [
+      "I am writing to convey my most heartfelt gratitude to you for your generous help and selfless support when {{I took part in the Sino-American cultural exchange program in the United States}}. Your warm support and generous help during {{my stay there}} meant a great deal to me.",
+      "It was your patient guidance and constant encouragement that enabled me to overcome the obstacles and achieve a satisfying outcome. What strikes me most is your {{sincere and warm kindness}}, which has not only left a lasting impression on me but also taught me the true meaning of dedication and mutual help. Besides, I sincerely welcome you to China in due course.",
+      "Once again, please accept my sincere appreciation for everything you have done for me. I sincerely hope that I will have the opportunity to repay your kindness in the future. Wish you all the best."
+     ],
+     "closing": "Yours sincerely,",
+     "signature": "Zhang Wei"
+    },
+    "appCn": {
+     "salutation": "尊敬的史密斯先生：",
+     "paras": [
+      "我写这封信向您表达最诚挚的谢意，感谢我在美国参加中美文化交流项目期间，您给予我的慷慨帮助与无私支持。我在当地逗留的那段日子里，您热忱的扶持与慷慨相助对我意义重大。",
+      "正是您耐心的指导与不断的鼓励，让我得以克服重重阻碍，取得令人满意的成果。令我印象最为深刻的是您真挚热忱的善意，这不仅给我留下了难以磨灭的印象，也让我懂得了奉献与互助的真正内涵。此外，我由衷欢迎您在合适的时候来中国做客。",
+      "请再次接受我对您所做一切的诚挚谢意。我真心希望未来有机会回报您的善意。祝您万事顺遂。"
+     ],
+     "closing": "谨启",
+     "signature": "张伟"
+    }
+   }
+  ]
+ },
+ {
+  "type": "求职/申请信",
+  "pages": "26-27",
+  "kind": "letter",
+  "template": {
+   "salutation": "Dear Mr. Smith,",
+   "paras": [
+    "I am a senior student from Peking University, and I am writing to formally apply for the position of {{职位}}, which was recently advertised on {{信息渠道}}.",
+    "I hold the firm belief that I am highly qualified for this role for the following reasons. First, my robust academic background in relevant fields has equipped me with a solid grasp of {{专业能力}}, which lays a firm theoretical foundation for the job. Furthermore, I am equipped with strong communication skills and a proactive work attitude, allowing me to integrate quickly into teams and perform well both independently and collaboratively. {{（第二段可用于推荐信）}}",
+    "Enclosed with this letter is my resume, which provides full details of my qualifications. I would greatly appreciate it if you could give my application favorable consideration."
+   ],
+   "closing": "Yours sincerely,",
+   "signature": "Li Ming"
+  },
+  "templateCn": {
+   "salutation": "尊敬的史密斯先生：",
+   "paras": [
+    "我是北京大学一名大四学生，写此信正式申请职位，该岗位近期发布于信息渠道。",
+    "我坚信自己完全能够胜任该岗位，理由如下。首先，我在相关领域扎实的学业基础，让我熟练掌握专业能力，为本份工作筑牢理论根基。此外，我拥有优秀的沟通能力与积极进取的工作态度，能够快速融入团队，无论是独立完成任务还是团队协作都可以表现出色。",
+    "随信附上我的简历，详细列明我的各项资质。倘若您能对我的申请予以优先考量，我将不胜感激。"
+   ],
+   "closing": "谨启",
+   "signature": "李明"
+  },
+  "cases": [
+   {
+    "year": null,
+    "exam": null,
+    "topic": "求职信：向公司申请销售员岗位",
+    "directions": "Write a letter about 100 words to a company to apply for a post of salesman. You should include necessary details without revealing any true information of yourself. You should write about 100 words on ANSWER SHEET 2. Do not sign your own name at the end of the letter. Use \"Li Ming\" instead.",
+    "directionsCn": null,
+    "app": {
+     "salutation": "Dear Manager,",
+     "paras": [
+      "I am a senior student from Peking University, and I am writing to formally apply for the position of {{salesman}}, which was recently advertised on {{your company's official website}}.",
+      "I hold the firm belief that I am highly qualified for this role for the following reasons. First, my robust academic background in relevant fields has equipped me with a solid grasp of {{marketing knowledge}}, which lays a firm theoretical foundation for the job. Furthermore, I am equipped with strong communication skills and a proactive work attitude, allowing me to integrate quickly into teams and perform well both independently and collaboratively.",
+      "Enclosed with this letter is my resume, which provides full details of my qualifications. I would greatly appreciate it if you could give my application favorable consideration."
+     ],
+     "closing": "Yours sincerely,",
+     "signature": "Li Ming"
+    },
+    "appCn": {
+     "salutation": "尊敬的经理：",
+     "paras": [
+      "我是北京大学的一名大四学生。我写此信正式申请贵公司官网近期发布的销售员岗位。",
+      "我坚信自己完全能够胜任该职位，理由如下。第一，我在相关领域扎实的学业背景，使我牢固掌握市场营销知识，为本岗位打下坚实的理论基础。此外，我具备出色的沟通能力与积极主动的工作态度，能够快速融入团队，无论是独立工作还是团队协作都可以表现出色。",
+      "随信附上我的简历，里面完整详述了我的个人资质。若您能对我的申请予以优先考量，我将不胜感激。"
+     ],
+     "closing": "谨启",
+     "signature": "李明"
+    }
+   }
+  ]
+ },
+ {
+  "type": "咨询/求助信",
+  "pages": "28-29",
+  "kind": "letter",
+  "template": {
+   "salutation": "Dear Mr. Smith,",
+   "paras": [
+    "I am a senior student from Peking University, and I am writing to respectfully seek your professional guidance regarding {{主题}}.",
+    "First and foremost, {{困难方面1}} has posed a considerable challenge for me. Much as I have consulted relevant materials and made preliminary attempts, I still find it hard to break through the current bottleneck. Secondly, I would also greatly appreciate your advice on {{困难方面2}}. I have tried several solutions on my own, but none has achieved satisfactory results.",
+    "Thank you sincerely for your precious time and kind consideration. I would be extremely grateful if you could offer me some advice at your earliest convenience."
+   ],
+   "closing": "Yours sincerely,",
+   "signature": "Li Ming"
+  },
+  "templateCn": {
+   "salutation": "尊敬的史密斯先生：",
+   "paras": [
+    "我是北京大学的一名大四学生。我写此信，谨就主题一事寻求您的专业指导。",
+    "首先，困难方面1给我带来了很大挑战。尽管我查阅过相关资料，也做出过初步尝试，但仍然难以突破目前的瓶颈。其次，也恳请您就困难方面2给出建议。我自己尝试过数种解决办法，但均未取得令人满意的效果。",
+    "由衷感谢您宝贵的时间与体谅。倘若您在方便之时能够给予我一些建议，我将不胜感激。"
+   ],
+   "closing": "谨启",
+   "signature": "李明"
+  },
+  "cases": [
+   {
+    "year": 2006,
+    "exam": "英语一",
+    "topic": "求助信：就向希望工程资助偏远地区儿童一事寻求专业指导",
+    "directions": "You want to contribute to Project Hope by offering financial aid to a child in a remote area. Write a letter to the department concerned, asking them to help find a candidate. You should specify what kind of child you want to help and how you will carry out your plan. Write your letter with no less than 100 words. Write it neatly on ANSWER SHEET 2. Do not sign your own name at the end of the letter. Use \"Li Ming\" instead. You do not need to write the address. (10 points)",
+    "directionsCn": null,
+    "app": {
+     "salutation": "Dear Mr. Smith,",
+     "paras": [
+      "I am a senior student from Peking University, and I am writing to respectfully seek your professional guidance regarding {{offering financial aid to a child in remote areas for Project Hope}}.",
+      "First and foremost, {{selecting a suitable child}} has posed a considerable challenge for me. Much as I have consulted relevant materials and made preliminary attempts, I still find it hard to identify a child who is in urgent need of educational support. Secondly, I would also greatly appreciate your advice on {{how to carry out my aid plan properly}}. I hope to help a poor but hard-working school-age child, and I plan to provide regular financial support for his or her schooling.",
+      "Thank you sincerely for your precious time and kind consideration. I would be extremely grateful if you could offer me some advice at your earliest convenience."
+     ],
+     "closing": "Yours sincerely,",
+     "signature": "Li Ming"
+    },
+    "appCn": {
+     "salutation": "尊敬的史密斯先生：",
+     "paras": [
+      "我是北京大学的一名大四学生。写这封信，希望就希望工程资助偏远地区儿童一事，寻求您的专业指导。",
+      "首先，挑选一名合适的受助孩子对我而言是一大难题。尽管我查阅了相关资料，也做过初步尝试，但依旧很难找到一名迫切需要教育帮扶的孩子。其次，我也希望您能就如何合理实施资助计划给出建议。我想帮助一名家境贫困但学习刻苦的学龄儿童，并计划为其学业提供定期的经济资助。",
+      "衷心感谢您宝贵的时间与善意的考量。倘若您方便之时能给我一些建议，我将万分感激。"
+     ],
+     "closing": "谨启",
+     "signature": "李明"
+    }
+   }
+  ]
+ },
+ {
+  "type": "祝贺信",
+  "pages": "30-31",
+  "kind": "letter",
+  "template": {
+   "salutation": "Dear Mr. Smith,",
+   "paras": [
+    "I was absolutely delighted to learn the splendid news that {{祝贺事件}}. It came as no surprise to me given your long-term devotion, but I still could not help sharing the joy of this remarkable achievement with you.",
+    "It is your consistent diligence, unwavering perseverance and profound expertise that have paved the way for this outstanding accomplishment. For years, I have witnessed your steady efforts and continuous breakthroughs in {{领域}}, and your spirit of striving for excellence has always been a great inspiration to me. I am fully convinced that this milestone is merely a new starting point, and you will keep scaling new heights and achieve even more brilliant successes in all your future endeavors.",
+    "Once again, I extend my heartfelt congratulations to you. Wish you all the best and continued progress in the coming years."
+   ],
+   "closing": "Yours sincerely,",
+   "signature": "Li Ming"
+  },
+  "templateCn": {
+   "salutation": "尊敬的史密斯先生：",
+   "paras": [
+    "得知祝贺事件这一喜讯，我万分欣喜。鉴于你长期以来的付出，这份成绩于我而言并不意外，但我仍忍不住与你一同分享这项非凡成就带来的喜悦。",
+    "正是你持之以恒的勤奋、矢志不渝的毅力以及深厚的专业知识，为这份出色的成果铺平了道路。多年来，我见证了你在领域之中脚踏实地的付出与接连不断的突破，你追求卓越的精神一直给予我莫大的鼓舞。我完全相信，这一里程碑仅仅是全新的起点，在未来的各项事业中，你必将不断攀登新的高峰，收获更为辉煌的成就。",
+    "再次向你致以我由衷的祝贺。祝你万事顺遂，来日不断取得进步。"
+   ],
+   "closing": "谨启",
+   "signature": "李明"
+  },
+  "cases": [
+   {
+    "year": 2011,
+    "exam": "英语二",
+    "topic": "祝贺信：祝贺表弟考上大学，并就如何为大学生活做准备提出建议",
+    "directions": "Suppose your cousin Li Ming has just been admitted to a university. Write him/her a letter to 1) congratulate him/her, and 2) give him/her suggestions on how to get prepared for university life. You should write about 100 words on ANSWER SHEET 2. Do not sign your own name at the end of the letter. Use \"Zhang Wei\" instead. Do not write the address. (10 points)",
+    "directionsCn": null,
+    "app": {
+     "salutation": "Dear Li Ming,",
+     "paras": [
+      "I was absolutely delighted to learn the splendid news that {{you have been admitted to a university}}. It came as no surprise to me given your long-term devotion, but I still could not help sharing the joy of this remarkable achievement with you.",
+      "It is your consistent diligence, unwavering perseverance and profound expertise that have paved the way for this outstanding accomplishment. For years, I have witnessed your steady efforts and continuous breakthroughs in {{academic study}}, and your spirit of striving for excellence has always been a great inspiration to me. Besides, I suggest you develop good living habits and learn to manage your time well to adapt to upcoming university life. I am fully convinced that this milestone is merely a new starting point, and you will keep scaling new heights and achieve even more brilliant successes in all your future endeavors.",
+      "Once again, I extend my heartfelt congratulations to you. Wish you all the best and continued progress in the coming years."
+     ],
+     "closing": "Yours sincerely,",
+     "signature": "Zhang Wei"
+    },
+    "appCn": {
+     "salutation": "亲爱的李明：",
+     "paras": [
+      "得知你被大学录取这一喜讯，我万分高兴。考虑到你长期以来的付出，这个结果于我而言并不意外，但我依旧忍不住与你一同分享这份重大成就带来的喜悦。",
+      "正是你持之以恒的勤奋、坚定不移的毅力以及深厚的专业知识，为这份出色的成绩铺平了道路。多年来，我见证了你在学业上稳步付出、不断取得突破，你追求卓越的精神一直深深激励着我。此外，我建议你养成良好的生活习惯，学会管理时间，以此适应即将到来的大学生活。我完全相信，这一里程碑仅仅是一个新起点，在今后的所有奋斗中，你会不断攀登新高度，收获更加辉煌的成就。",
+      "再次向你致以由衷的祝贺。祝你万事顺遂，在未来的日子里不断进步。"
+     ],
+     "closing": "谨启",
+     "signature": "张伟"
+    }
+   }
+  ]
+ },
+ {
+  "type": "通知/告示",
+  "pages": "32-35",
+  "kind": "notice",
+  "template": {
+   "title": "Notice",
+   "date": "Dec. 25, 2026",
+   "paras": [
+    "To enrich students' campus life and broaden their horizons, {{主办单位}} is formally launching {{主题}}. Relevant details are outlined below for your reference.",
+    "This event is scheduled to take place at the school auditorium at 3 p.m. on December 30, 2026. Participants are expected to meet the following criteria: for one thing, {{基本要求（如 a strong sense of responsibility and positive attitude）}} are essential prerequisites; for another, candidates with relevant practical experience or professional skills will be given priority. During the event, you will be exposed to {{领域（如 cutting-edge academic insights/hands-on practical training）}}, which will equip you with valuable experience.",
+    "If you are interested, please submit your application to the designated email abc@123.com before December 28th. We sincerely welcome your active participation and look forward to your wonderful performance."
+   ],
+   "signature": "{{主体单位}}"
+  },
+  "templateCn": {
+   "title": "通知",
+   "date": "2026年12月25日",
+   "paras": [
+    "为丰富同学们的校园生活、拓宽视野，主办单位正式举办本次活动。相关详情罗列如下，供大家参考。",
+    "本次活动定于2026年12月30日下午3点在校礼堂举办。参与者需满足以下条件：一方面，基本要求（如强烈的责任心与积极的态度）是必备前提；另一方面，拥有相关实践经历或专业技能的申请者将被优先考虑。活动期间，大家将接触到该领域（如前沿学术观点/实操训练），收获宝贵经验。",
+    "有意向者，请于12月28日前将申请材料发送至指定邮箱 abc@123.com。我们热忱欢迎大家积极参与，期待各位的精彩表现。"
+   ],
+   "signature": "主体单位"
+  },
+  "cases": [
+   {
+    "year": 2023,
+    "exam": "英语一",
+    "topic": "通知：为史密斯教授关于校园体育活动的研究项目招募学生",
+    "directions": "Write a notice to recruit a student for Prof. Smith's research project on campus sports activities. Specify the duties and requirements of the job. Do not sign your own name at the end of the letter. Use \"Li Ming\" instead. Do not write the address. (10 points)",
+    "directionsCn": "为史密斯教授关于校园体育活动的研究项目写一份招募学生的通知。详细说明工作职责和要求。不要在通知中使用自己的名字。用“李明”代替。不要写地址",
+    "app": {
+     "title": "Notice",
+     "date": "Dec. 25, 2026",
+     "paras": [
+      "To enrich students' campus life and broaden their horizons, {{the Student Union}} is formally launching {{the recruitment for Prof. Smith's research project on campus sports activities}}. Relevant details are outlined below for your reference.",
+      "This event is scheduled to take place at the school auditorium at 3 p.m. on December 30, 2026. Participants are expected to meet the following criteria: for one thing, {{a strong sense of responsibility and positive attitude}} are essential prerequisites; for another, candidates with relevant practical experience or professional skills will be given priority. During the event, you will be exposed to {{research work including collecting sports-activity data and sorting out survey materials}}, which will equip you with valuable experience.",
+      "If you are interested, please submit your application to the designated email abc@123.com before December 28th. We sincerely welcome your active participation and look forward to your wonderful performance."
+     ],
+     "signature": "{{Li Ming}}"
+    },
+    "appCn": {
+     "title": "通知",
+     "date": "2026年12月25日",
+     "paras": [
+      "为丰富同学们的校园生活、拓宽视野，学生会正式启动史密斯教授校园体育活动研究项目的招募工作。相关详情罗列如下，供大家参考。",
+      "本次招募宣讲会定于2026年12月30日下午3点在校礼堂举办。报名者需要满足以下条件：一方面，强烈的责任心与积极的态度是必备前提；另一方面，拥有相关实践经验或专业技能的候选人将被优先考虑。参与项目期间，你将接触各类研究工作，包括收集体育活动数据、整理调研材料，这会为你积累宝贵经验。",
+      "如有意向，请于12月28日前将申请表提交至指定邮箱：abc@123.com。我们热忱欢迎大家积极报名，期待各位的出色表现。"
+     ],
+     "signature": "李明"
+    }
+   },
+   {
+    "year": 2020,
+    "exam": "英语一",
+    "topic": "通知：向留学生通知即将举行的校园歌唱比赛",
+    "directions": "The student union of your university has assigned you to inform the international students about an upcoming singing contest. Write a notice in about 100 words. Write your answer on the ANSWER SHEET. Do not use your own name in the notice. (10 points)",
+    "directionsCn": "你们大学的学生会派你们去通知留学生即将举行的歌唱比赛。写一个100字左右的通知。把答案写在答题纸上。不要在通知中使用自己的名字。",
+    "app": {
+     "title": "Notice",
+     "date": "Dec. 25, 2026",
+     "paras": [
+      "To enrich students' campus life and broaden their horizons, {{the Student Union}} is formally launching {{the campus singing contest for international students}}. Relevant details are outlined below for your reference.",
+      "This event is scheduled to take place at the school auditorium at 3 p.m. on December 30, 2026. Participants are expected to meet the following criteria: for one thing, {{a positive attitude and passion for music}} are essential prerequisites; for another, candidates with relevant practical experience or professional skills will be given priority. During the event, you will be exposed to {{wonderful musical performances}}, which will equip you with valuable experience.",
+      "If you are interested, please submit your application to the designated email abc@123.com before December 28th. We sincerely welcome your active participation and look forward to your wonderful performance."
+     ],
+     "signature": "{{The Student Union}}"
+    },
+    "appCn": {
+     "title": "通知",
+     "date": "2026年12月25日",
+     "paras": [
+      "为丰富同学们的校园生活、拓宽视野，学生会正式举办面向留学生的校园歌唱比赛。相关详情罗列如下，供大家参考。",
+      "本次活动定于2026年12月30日下午3点在校礼堂举行。参赛者需要满足以下条件：第一，积极的态度和对音乐的热爱是必备要求；第二，拥有相关实践经历或是专业特长的参赛者将获得优先考虑。活动期间，你将接触精彩的音乐表演，收获宝贵的经历。",
+      "如有意向，请于12月28日前将申请发送至指定邮箱 abc@123.com。我们热忱欢迎大家积极报名，期待你的精彩表现。"
+     ],
+     "signature": "学生会"
+    }
+   },
+   {
+    "year": 2010,
+    "exam": "英语一",
+    "topic": "通知：为研究生协会招募全球化国际会议志愿者",
+    "directions": "You are supposed to write for the postgraduate association a notice to recruit volunteers for an international conference on globalization, you should conclude the basic qualification of applicant and the other information you think relative. You should write about 100 words. Do not sign your own name at the end of the letter. Use \"postgraduate association\" instead.",
+    "directionsCn": "你需要为研究生协会撰写一则通知，招募参加一场关于全球化的国际会议的志愿者。你应当列出申请人的基本条件以及其他你认为相关的信息。您需要写大约100个单词的内容。在信的末尾不要签上自己的名字。请使用“研究生协会”这一表述。",
+    "app": {
+     "title": "Notice",
+     "date": "Dec. 25, 2026",
+     "paras": [
+      "To enrich students' campus life and broaden their horizons, {{the Postgraduate Association}} is formally launching {{volunteer recruitment for an international conference on globalization}}. Relevant details are outlined below for your reference.",
+      "This event is scheduled to take place at the school auditorium at 3 p.m. on December 30, 2026. Participants are expected to meet the following criteria: for one thing, {{a strong sense of responsibility and a positive attitude}} are essential prerequisites; for another, candidates with relevant practical experience or professional skills will be given priority. During the event, you will be exposed to {{frontier academic discussions}}, which will equip you with valuable experience.",
+      "If you are interested, please submit your application to the designated email abc@123.com before December 28th. We sincerely welcome your active participation and look forward to your wonderful performance."
+     ],
+     "signature": "{{Postgraduate Association}}"
+    },
+    "appCn": {
+     "title": "通知",
+     "date": "2026年12月25日",
+     "paras": [
+      "为丰富同学们的校园生活、拓宽视野，研究生会正式启动一场全球化主题国际会议的志愿者招募工作。相关详情罗列如下，供大家参考。",
+      "本次招募活动定于2026年12月30日下午3点在校礼堂举行。报名者需满足以下条件：一方面，强烈的责任心与积极的态度是必备前提；另一方面，拥有相关实践经历或专业技能的候选人将被优先考虑。活动期间，你将接触前沿学术研讨，积累宝贵的实践经验。",
+      "如有意向，请于12月28日前将申请发送至指定邮箱 abc@123.com。我们热忱欢迎大家积极报名，期待你的出色表现。"
+     ],
+     "signature": "研究生会"
+    }
+   }
+  ]
+ },
+ {
+  "type": "纪要",
+  "pages": "36-37",
+  "kind": "minutes",
+  "template": {
+   "title": "Meeting minutes on \"{{主题}}\"",
+   "meta": [
+    "Time: From 2:00 p.m. to 4:00 p.m., on December 21, 2026",
+    "Place: Room 101, Student Center",
+    "Presided by: Zhang San",
+    "Attendees: All relevant members"
+   ],
+   "heading": "Summary of the meeting",
+   "paras": [
+    "I have attached the minutes of the previous meeting for your reference. The following is a summary of this meeting focusing on {{主题}}.",
+    "First, the meeting reviewed past achievements and practical experience, which provided valuable reference for the current work. Then, a detailed plan for follow-up tasks related to {{主题}} was formulated, covering responsibility allocation and a specific timetable. In addition, participants exchanged views and reached a consensus on how to improve work efficiency and strengthen collaboration. Finally, all members were encouraged to actively perform their duties and make joint efforts to implement the matters discussed at the meeting.",
+    "Should you find any errors or omissions in the minutes, please contact me for revision."
+   ],
+   "signature": "Li Ming",
+   "date": "December 21, 2026"
+  },
+  "templateCn": {
+   "title": "关于“{{主题}}”的会议纪要",
+   "meta": [
+    "时间：2026年12月21日下午2:00至4:00",
+    "地点：学生中心101房间",
+    "主持：张三",
+    "出席人员：所有相关成员{{（可以不写）}}"
+   ],
+   "heading": "会议纪要",
+   "paras": [
+    "我已附上上次会议的纪要以供您参考。以下是关于“{{主题}}”的会议总结。",
+    "首先，会议回顾了以往的成就和经验，为当前的工作提供了宝贵的参考。然后，针对与“{{主题}}”相关的后续任务制定了详细的计划，包括责任分配和时间表。此外，参与者交换了意见，并就如何提高效率和合作达成了一致意见。最后，所有成员都被鼓励积极履行职责，并共同努力落实所讨论的内容。",
+    "如果您发现纪要中有任何错误或遗漏，请与我联系进行修正。"
+   ],
+   "signature": "李明",
+   "date": "2026年12月21日"
+  },
+  "cases": [
+   {
+    "year": null,
+    "exam": null,
+    "topic": "会议纪要：关于为希望工程做贡献的班会会议纪要",
+    "directions": "Suppose your class held a class meeting on contributing to Project Hope last weekend. You were assigned to write the minutes of the meeting. In your minutes, you should record the basic information, main contents of the meeting, and other relevant information. Write your answer in about 100 words on the ANSWER SHEET. Do not use your own name in your minutes; use \"Li Ming\" instead.",
+    "directionsCn": null,
+    "app": {
+     "title": "Meeting minutes on \"{{Contributing to Project Hope}}\"",
+     "meta": [
+      "Time: From 2:00 p.m. to 4:00 p.m., on December 21, 2026",
+      "Place: Room 101, Student Center",
+      "Presided by: Zhang San",
+      "Attendees: All relevant members"
+     ],
+     "heading": "Summary of the meeting",
+     "paras": [
+      "I have attached the minutes of the previous meeting for your reference. The following is a summary of this meeting focusing on {{contributing to Project Hope}}.",
+      "First, the meeting reviewed past achievements and practical experience, which provided valuable reference for the current work. Then, a detailed plan for follow-up tasks related to {{Project Hope}} was formulated, covering responsibility allocation and a specific timetable. In addition, participants exchanged views and reached a consensus on how to improve work efficiency and strengthen collaboration. Finally, all members were encouraged to actively perform their duties and make joint efforts to implement the matters discussed at the meeting.",
+      "Should you find any errors or omissions in the minutes, please contact me for revision."
+     ],
+     "signature": "Li Ming",
+     "date": "December 21, 2026"
+    },
+    "appCn": null
+   }
+  ]
+ }
+];
+
 const tabs = $('#tabs'), panels = $('#panels');
 
 /* ---------- 题型 / 年份 两级导航 ---------- */
@@ -1021,8 +1919,92 @@ const FAMILIES = [
     [2009,'网络的“近”与“远”'],[2011,'环境污染'],[2015,'沉迷手机']]},
   { id:'sta', name:'图表 · 静态', years:[[2026,'养老机器人：接受度与关注点']]},
   { id:'dyn', name:'图表 · 动态', years:[[2025,'耐用消费品拥有量']]},
-  { id:'notice', name:'小作文 · 通知', years:[[2023,'招募 Smith 教授研究项目学生']]}
+  { id:'notice', name:'小·通知', years:[[2023,'招募 Smith 教授研究项目学生']]}
 ];
+
+
+/* ---------- 小作文：按类型生成年份案例 ---------- */
+function buildSmallCase(t, c, famId, ti){
+  const kind = t.kind || 'letter';
+  const rows = [];
+  function mk(name, tpl, tplCn, app, appCn){
+    const a = (Array.isArray(app) ? app : [app]).filter(Boolean);
+    if (!a.length) return;
+    rows.push({
+      name: name,
+      tag: '',
+      tpl: (Array.isArray(tpl) ? tpl : [tpl]).filter(Boolean),
+      tplCn: tplCn || '',
+      app: a,
+      appCn: appCn || ''
+    });
+  }
+  const tt = t.template || {}, tc = t.templateCn || {}, ca = c.app || {}, cc = c.appCn || {};
+
+  if (kind === 'minutes'){
+    mk('标题', [tt.title], tc.title, [ca.title], cc.title);
+    mk('会议信息', [(tt.meta || []).join('\n')], (tc.meta || []).join(' / '), [(ca.meta || []).join('\n')], (cc.meta || []).join(' / '));
+    mk('正文标题', [tt.heading], tc.heading, [ca.heading], cc.heading);
+    (tt.paras || []).forEach((p, i) => mk('第' + (i + 1) + '段', [p], (tc.paras || [])[i], (ca.paras || [])[i], (cc.paras || [])[i]));
+    mk('署名', [tt.signature, tt.date], '', [ca.signature, ca.date], [cc.signature, cc.date].filter(Boolean).join(' / '));
+  } else if (kind === 'notice'){
+    mk('标题', [tt.title], tc.title, [ca.title], cc.title);
+    mk('日期', [tt.date], tc.date, [ca.date], cc.date);
+    (tt.paras || []).forEach((p, i) => mk('第' + (i + 1) + '段', [p], (tc.paras || [])[i], (ca.paras || [])[i], (cc.paras || [])[i]));
+    mk('署名', [tt.signature], tc.signature, [ca.signature], cc.signature);
+  } else {
+    mk('称呼', [tt.salutation], tc.salutation, [ca.salutation], cc.salutation);
+    (tt.paras || []).forEach((p, i) => mk('第' + (i + 1) + '段', [p], (tc.paras || [])[i], (ca.paras || [])[i], (cc.paras || [])[i]));
+    mk('落款', [tt.closing, tt.signature], '', [ca.closing, ca.signature],
+      [cc.closing, cc.signature].filter(Boolean).join(' / '));
+  }
+
+  const y = c.year || 0;
+  return {
+    id: 's' + ti + '_' + (y || 'x'),
+    family: famId,
+    year: y,
+    label: y ? String(y) : '模拟',
+    appTag: (y ? y + ' 成文' : '模拟题 成文'),
+    kicker: (y ? y + ' ' + (c.exam || '英语一') : '模拟题') + ' · 小作文' + (kind === 'notice' ? '（通知/告示）' : kind === 'minutes' ? '（纪要）' : '（书信）'),
+    title: c.topic || (t.type + (y ? ' · ' + y : '')),
+    dir: c.directions || '',
+    dirCn: c.directionsCn || '',
+    paras: rows
+  };
+}
+
+(function registerSmall(){
+  SMALL_TYPES.forEach((t, ti) => {
+    const isNotice = t.kind === 'notice' || (t.type || '').indexOf('通知') >= 0;
+    const famId = isNotice ? 'notice' : ('sm' + ti);
+    const fam = FAMILIES.find(f => f.id === famId);
+    const cases = (t.cases || []).filter(c => c && (c.year || c.topic));
+
+    const addCase = (c) => {
+      const y = c.year || 0;
+      if (CASES.some(x => x && x.family === famId && x.year === y)) return;
+      const cs = buildSmallCase(t, c, famId, ti);
+      CASES.push(cs);
+      if (y) fam && fam.years.push([y, c.topic || t.type]);
+      else fam && fam.years.push([0, c.topic || t.type]);
+    };
+
+    if (fam){
+      cases.forEach(addCase);
+    } else {
+      const name = '小·' + String(t.type || '').replace('信', '').replace('/申请', '').replace('/求助', '').replace('/告示', '');
+      const nf = { id: famId, name: name, years: [] };
+      FAMILIES.push(nf);
+      cases.forEach(c => {
+        const y = c.year || 0;
+        nf.years.push([y, c.topic || t.type]);
+        CASES.push(buildSmallCase(t, c, famId, ti));
+      });
+    }
+  });
+  FAMILIES.forEach(f => f.years.sort((a, b) => (a[0] === 0 ? 9999 : a[0]) - (b[0] === 0 ? 9999 : b[0])));
+})();
 
 /* 新补年份：套用同类模板；单图题用单图模板 */
 (function hydrateCases(){
@@ -1171,7 +2153,7 @@ function renderYears(fid, activeId){
     const id = c ? c.id : fid + '-' + y;
     return `<button class="ybtn${c ? '' : ' off'}" type="button" data-case="${id}"
       aria-selected="${id === activeId}"
-      title="${escT(topic)}${c ? '' : '（待补充）'}">${y}${c ? '' : ' · 待'}</button>`;
+      title="${escT(topic)}${c ? '' : '（待补充）'}">${y === 0 ? '模拟' : y}${c ? '' : ' · 待'}</button>`;
   }).join('');
 }
 
@@ -1784,6 +2766,12 @@ function mapHasCase(id){
   return !!id && CASES.some(c => c && c.id === id && c.paras && c.paras.length);
 }
 
+function smallCaseId(year){
+  const c = CASES.find(x => x && x.year === year &&
+    (x.family === 'notice' || String(x.family || '').indexOf('sm') === 0));
+  return c ? c.id : '';
+}
+
 function mapYearCell(year, id){
   if (mapHasCase(id)) return `<button class="map-jump" type="button" data-jump="${id}">${year}</button>`;
   return `<span class="map-off">${year}</span>`;
@@ -1806,7 +2794,7 @@ function renderMap(){
   const bigTable = MAP_BIG.map(r =>
     `<tr><td class="map-yr">${mapYearCell(r[0], r[3])}</td><td>${escT(r[1])}</td><td>${escT(r[2])}</td></tr>`).join('');
   const smallTable = MAP_SMALL.map(r =>
-    `<tr><td class="map-yr">${mapYearCell(r[0], r[3])}</td><td>${escT(r[1])}</td><td>${escT(r[2])}</td></tr>`).join('');
+    `<tr><td class="map-yr">${mapYearCell(r[0], r[3] || smallCaseId(r[0]))}</td><td>${escT(r[1])}</td><td>${escT(r[2])}</td></tr>`).join('');
 
   document.getElementById('mapBody').innerHTML = `
     <div class="map-sec">
