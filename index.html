@@ -145,6 +145,32 @@ details.plain summary{cursor:pointer;font-size:13px;color:var(--green);font-weig
 details.plain p{font-family:Georgia,serif;font-size:15px;line-height:1.95;margin:10px 0 0}
 
 /* popover */
+.map-mask{position:fixed;inset:0;background:rgba(8,18,14,.55);z-index:70}
+.map-panel{position:fixed;left:50%;top:4vh;transform:translateX(-50%);width:min(880px,94vw);
+  max-height:92vh;overflow:auto;background:var(--paper);border-radius:16px;z-index:71;
+  box-shadow:0 24px 70px rgba(0,0,0,.35);padding:18px 22px 26px}
+.map-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  position:sticky;top:-18px;background:var(--paper);padding:12px 0 10px;z-index:2;border-bottom:1px solid var(--line)}
+.map-head h3{font-size:18px;margin:0}
+.map-sec{margin:18px 0 6px}
+.map-sec h4{font-size:14px;margin:0 0 8px;color:var(--green)}
+.map-sec p{font-size:12.5px;color:var(--sub);margin:0 0 8px}
+.map-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.map-table th{text-align:left;font-weight:600;color:var(--sub);font-size:12px;padding:4px 8px;border-bottom:1px solid var(--line)}
+.map-table td{padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.map-table tr:last-child td{border-bottom:0}
+.map-yr{font-variant-numeric:tabular-nums;color:var(--sub);white-space:nowrap}
+.map-jump{border:0;background:none;padding:0;font:inherit;color:var(--green);cursor:pointer;text-decoration:underline dotted}
+.map-jump:hover{color:var(--green2)}
+.map-off{color:var(--sub);opacity:.55}
+.map-types{display:flex;flex-direction:column;gap:10px}
+.map-type{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.map-type b{display:inline-block;font-size:13px;margin-bottom:6px}
+.map-type .yrs{display:flex;flex-wrap:wrap;gap:6px}
+.map-note{font-size:12px;color:var(--sub);margin-top:10px;line-height:1.7}
+@media (max-width:560px){
+  .map-panel{left:0;top:0;transform:none;width:100%;max-height:100vh;border-radius:0;padding:14px 16px 30px}
+}
 .pop{position:fixed;z-index:90;background:#1f261f;color:#fff;border-radius:10px;padding:9px 13px;
   box-shadow:0 10px 30px -12px rgba(0,0,0,.55);max-width:280px;font-size:13px;line-height:1.5}
 .pop-top{display:flex;align-items:center;gap:8px}
@@ -271,6 +297,7 @@ footer p{margin:4px 0}
   <div class="wrap">
     <div class="brand"><i>A</i>英语一 · 模板 × 真题</div>
     <nav class="nav"><a href="#cmp">逐段对照</a><a href="#how">换题怎么改</a></nav>
+    <button class="print" type="button" id="mapBtn">考点分布</button>
     <button class="print" type="button" onclick="window.print()">打印</button>
   </div>
 </header>
@@ -417,6 +444,16 @@ footer p{margin:4px 0}
   </div>
 </div>
 <audio id="ttsAudio" preload="auto" playsinline webkit-playsinline style="position:absolute;width:0;height:0;opacity:0"></audio>
+
+<div class="map-mask" id="mapMask" hidden></div>
+<section class="map-panel" id="mapPanel" hidden role="dialog" aria-label="考点分布">
+  <div class="map-head">
+    <h3>考点分布 · 2010–2026</h3>
+    <button class="btn sm plain" type="button" id="mapClose">关闭</button>
+  </div>
+  <div class="map-body" id="mapBody"></div>
+</section>
+
 <div class="pop" id="pop" hidden><div class="pop-top"><b></b><button class="pop-speak" id="popSpeak" type="button" aria-label="朗读单词">🔊</button></div><span></span><i></i></div>
 <div class="lightbox" id="lightbox" hidden><img alt=""></div>
 
@@ -1681,6 +1718,137 @@ panels.addEventListener('click', e => {
 
 /* 初始化：放在最后，确保 pop 等已定义 */
 selectFamily(FAMILIES[0].id);
+
+/* ---------- 考点分布 ---------- */
+const MAP_BIG = [
+  [2010, '图画·积极', '文化“火锅”：文化融合', 'c2010'],
+  [2011, '图画·消极', '旅程之“余”：旅游污染', 'c2011'],
+  [2012, '图画·积极', '乐观', ''],
+  [2013, '图画·积极', '选择', 'c2013'],
+  [2014, '图画·积极', '相携：感恩与回报', 'c2014'],
+  [2015, '图画·消极', '手机时代的聚会', 'neg'],
+  [2016, '图画·积极', '树立榜样：家庭教育', 'c2016'],
+  [2017, '图画·积极', '读书：积极行动', 'c2017'],
+  [2018, '图画·积极', '选课进行时：自信选择', 'c2018'],
+  [2019, '图画·积极', '途中：坚持不懈', 'c2019'],
+  [2020, '图画·积极', '习惯', 'c2020'],
+  [2021, '图画·积极', '坚持选择', 'c2021'],
+  [2022, '图画·积极', '广泛学习知识', 'c2022'],
+  [2023, '图画·积极', '传统文化：龙舟赛', 'c2023'],
+  [2024, '图画+图表', '公园数量与全民健身', ''],
+  [2025, '图表·动态', '耐用消费品拥有量', 'dyn'],
+  [2026, '图表·静态', '养老机器人接受度', 'c2026']
+];
+
+const MAP_SMALL = [
+  [2010, '通知', '招募国际会议志愿者', ''],
+  [2011, '推荐', '向朋友推荐一本书', ''],
+  [2012, '建议', '给校长写信提建议', ''],
+  [2013, '邀请', '邀请教授担任评委', ''],
+  [2014, '建议', '建议改善学生体质', ''],
+  [2015, '推荐', '向朋友推荐一本书', ''],
+  [2016, '通知', '会议 / 志愿者通知', ''],
+  [2017, '推荐', '推荐一处景点', ''],
+  [2018, '邀请', '邀请参加毕业典礼', ''],
+  [2019, '介绍', '介绍一座城市', ''],
+  [2020, '通知', '会议通知', ''],
+  [2021, '建议', '建议朋友接受工作', ''],
+  [2022, '邀请', '邀请教授参会', ''],
+  [2023, '通知', '招募研究项目学生', 'n2023'],
+  [2024, '建议', '回复求助：口头报告怎么准备', ''],
+  [2025, '介绍', '回复邮件：介绍青年工匠手作', ''],
+  [2026, '介绍', '回复邮件：介绍中国手写信', '']
+];
+
+function mapHasCase(id){
+  return !!id && CASES.some(c => c && c.id === id && c.paras && c.paras.length);
+}
+
+function mapYearCell(year, id){
+  if (mapHasCase(id)) return `<button class="map-jump" type="button" data-jump="${id}">${year}</button>`;
+  return `<span class="map-off">${year}</span>`;
+}
+
+function mapChips(rows){
+  return rows.map(r => mapHasCase(r[3])
+    ? `<button class="ybtn" type="button" data-jump="${r[3]}">${r[0]}</button>`
+    : `<span class="ybtn off" aria-disabled="true">${r[0]}</span>`).join('');
+}
+
+function mapGroup(rows, order){
+  const g = {};
+  rows.forEach(r => { (g[r[1]] = g[r[1]] || []).push(r); });
+  return order.filter(t => g[t]).map(t =>
+    `<div class="map-type"><b>${escT(t)}</b><div class="yrs">${mapChips(g[t])}</div></div>`).join('');
+}
+
+function renderMap(){
+  const bigTable = MAP_BIG.map(r =>
+    `<tr><td class="map-yr">${mapYearCell(r[0], r[3])}</td><td>${escT(r[1])}</td><td>${escT(r[2])}</td></tr>`).join('');
+  const smallTable = MAP_SMALL.map(r =>
+    `<tr><td class="map-yr">${mapYearCell(r[0], r[3])}</td><td>${escT(r[1])}</td><td>${escT(r[2])}</td></tr>`).join('');
+
+  document.getElementById('mapBody').innerHTML = `
+    <div class="map-sec">
+      <h4>一、大作文 · 逐年题型</h4>
+      <p>2010–2023 以图画为主；2024 首现“图画 + 图表”混合；2025、2026 转为图表。</p>
+      <table class="map-table"><thead><tr><th>年份</th><th>题型</th><th>主题</th></tr></thead><tbody>${bigTable}</tbody></table>
+    </div>
+
+    <div class="map-sec">
+      <h4>二、大作文 · 按题型分类</h4>
+      <div class="map-types">
+        ${mapGroup(MAP_BIG, ['图画·积极', '图画·消极', '图画+图表', '图表·静态', '图表·动态'])}
+      </div>
+    </div>
+
+    <div class="map-sec">
+      <h4>三、小作文 · 逐年类型</h4>
+      <p>功能集中在通知、推荐、建议、邀请、介绍五类，近三年以“回复邮件”出现。</p>
+      <table class="map-table"><thead><tr><th>年份</th><th>类型</th><th>题目内容</th></tr></thead><tbody>${smallTable}</tbody></table>
+    </div>
+
+    <div class="map-sec">
+      <h4>四、小作文 · 按类型分类</h4>
+      <div class="map-types">
+        ${mapGroup(MAP_SMALL, ['通知', '推荐', '建议', '邀请', '介绍'])}
+      </div>
+      <p class="map-note">注：2024 小作文有“介绍 / 建议”两种归类说法，这里按“建议信（回复 Paul 的求助）”处理；带下划线的年份可以点开看当年的成文。</p>
+    </div>`;
+}
+
+const mapMask = document.getElementById('mapMask');
+const mapPanel = document.getElementById('mapPanel');
+const mapBody = document.getElementById('mapBody');
+
+function openMap(){
+  renderMap();
+  mapMask.hidden = false;
+  mapPanel.hidden = false;
+}
+function closeMap(){
+  mapMask.hidden = true;
+  mapPanel.hidden = true;
+}
+function mapJump(id){
+  const c = CASES.find(x => x && x.id === id);
+  if (!c || !c.paras || !c.paras.length) return;
+  selectFamily(c.family);
+  selectCase(c.id);
+  closeMap();
+  const el = document.getElementById('cmp');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.getElementById('mapBtn').addEventListener('click', openMap);
+document.getElementById('mapClose').addEventListener('click', closeMap);
+mapMask.addEventListener('click', closeMap);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !mapPanel.hidden) closeMap(); });
+mapBody.addEventListener('click', e => {
+  const b = e.target.closest('[data-jump]');
+  if (b) mapJump(b.dataset.jump);
+});
+
 </script>
 </body>
 </html>
