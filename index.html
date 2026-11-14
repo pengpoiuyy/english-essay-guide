@@ -66,6 +66,13 @@ h2{font-family:"Songti SC","Noto Serif SC",Georgia,serif;font-size:clamp(21px,2.
 body.show-app .btn.primary{background:var(--paper);color:var(--green)}
 
 /* tabs */
+.yeartabs{display:flex;flex-wrap:wrap;gap:6px;margin:-10px 0 20px}
+.ybtn{border:1px solid var(--line);background:var(--paper);color:var(--sub);border-radius:99px;
+  padding:4px 11px;font-size:12.5px;font-family:inherit;cursor:pointer}
+.ybtn:hover{border-color:var(--green);color:var(--green)}
+.ybtn[aria-selected="true"]{background:var(--green);border-color:var(--green);color:#fff}
+.ybtn.off{opacity:.42;cursor:not-allowed}
+.ybtn.off:hover{border-color:var(--line);color:var(--sub)}
 .tabs{display:flex;gap:4px;padding:5px;background:var(--paper);border:1px solid var(--line);border-radius:99px;
   width:fit-content;max-width:100%;overflow-x:auto;scrollbar-width:none;margin-bottom:22px}
 .tabs::-webkit-scrollbar{display:none}
@@ -267,7 +274,7 @@ footer p{margin:4px 0}
 <main>
   <section class="hero">
     <div class="wrap">
-      <p class="eyebrow">大作文 2026 / 2025 / 2016 / 2015 · 小作文通知</p>
+      <p class="eyebrow">英语一 · 2010–2026 历年真题 × 模板</p>
       <h1>先看模板，再看它怎么写进真题</h1>
       <p>页面默认只显示左栏的模板。点“查看模板的应用”，右栏才会展开：同一段的成文，<span style="color:#ffd9cf">红色</span>是模板之外、这道题自己写的内容。英文里每个词都能点，点一下就看词义。小作文通知是最后一个标签，用同一套看法。</p>
       <div class="legend">
@@ -291,6 +298,7 @@ footer p{margin:4px 0}
       <p class="lead">左栏是模板原句，右栏是真题成文——大作文分三段，小作文通知分五块。建议顺序：先只读左栏、把每句作用说一遍；再展开右栏，盯住红字看“哪些词被换掉了”。</p>
 
       <div class="tabs" id="tabs" role="tablist" aria-label="真题切换"></div>
+      <div class="yeartabs" id="yeartabs" role="tablist" aria-label="年份切换"></div>
       <div id="panels"></div>
     </div>
   </section>
@@ -678,7 +686,6 @@ const CASES = [
       }
     ]
   },
-,
   {
     id:'n2023', label:'通知 · 2023', appTag:'2023 成文',
     kicker:'2023 英语（一）· 小作文 Notice',
@@ -783,11 +790,56 @@ function plainCn(text){
 
 const tabs = $('#tabs'), panels = $('#panels');
 
-tabs.innerHTML = CASES.map((c, i) =>
-  `<button class="tab" role="tab" type="button" id="tab-${c.id}" data-tab="${c.id}"
-    aria-selected="${i === 0}" aria-controls="p-${c.id}">${c.label}</button>`).join('');
+/* ---------- 题型 / 年份 两级导航 ---------- */
+function escT(s){
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
-panels.innerHTML = CASES.map((c, i) => {
+const FAMILIES = [
+  { id:'pos', name:'图画 · 积极', years:[
+    [2010,'文化融合（文化“火锅”）'],[2012,'乐观'],[2013,'正确选择'],[2014,'感恩与回报'],
+    [2016,'树立榜样'],[2017,'开卷有益'],[2018,'选课进行时'],[2019,'爬山'],
+    [2020,'习惯'],[2021,'坚持选择'],[2022,'广泛学习知识'],[2023,'传统文化']]},
+  { id:'neg', name:'图画 · 消极', years:[
+    [2009,'网络的“近”与“远”'],[2011,'环境污染'],[2015,'沉迷手机']]},
+  { id:'sta', name:'图表 · 静态', years:[[2026,'养老机器人：接受度与关注点']]},
+  { id:'dyn', name:'图表 · 动态', years:[[2025,'耐用消费品拥有量']]},
+  { id:'notice', name:'小作文 · 通知', years:[[2023,'招募 Smith 教授研究项目学生']]}
+];
+
+const CASE_META = {
+  c2026: ['sta', 2026],
+  c2016: ['pos', 2016],
+  neg:   ['neg', 2015],
+  dyn:   ['dyn', 2025],
+  n2023: ['notice', 2023]
+};
+CASES.forEach(c => { const m = CASE_META[c.id]; if (m){ c.family = m[0]; c.year = m[1]; } });
+
+const ALL = [];
+FAMILIES.forEach(f => f.years.forEach(([y, topic]) => {
+  const c = CASES.find(x => x && x.family === f.id && x.year === y);
+  ALL.push(c || { id: f.id + '-' + y, family: f.id, year: y, missing: true, topic: topic });
+}));
+
+const yeartabs = $('#yeartabs');
+let currentFamily = FAMILIES[0].id;
+
+function renderCase(c, i){
+  if (c.missing){
+    return `
+    <article class="case" id="p-${c.id}" role="tabpanel" ${i ? 'hidden' : ''}>
+      <div class="case-head nofig">
+        <div class="case-info">
+          <p class="kicker">${c.year} 英语（一）</p>
+          <h3>${escT(c.topic)}</h3>
+          <p class="dir">这一年的题目和应用还没上传。</p>
+          <p class="dirCn">上传题目图片和对应模板的成文后，这里会显示和现有年份一样的左右对照。</p>
+        </div>
+      </div>
+    </article>`;
+  }
+
   const items = c.paras || c.rows || [];
   const rows = items.map((p, j) => `
     <section class="row">
@@ -820,7 +872,7 @@ panels.innerHTML = CASES.map((c, i) => {
       : '';
 
   return `
-  <article class="case" id="p-${c.id}" role="tabpanel" aria-labelledby="tab-${c.id}" ${i ? 'hidden' : ''}>
+  <article class="case" id="p-${c.id}" role="tabpanel" ${i ? 'hidden' : ''}>
     <div class="case-head${c.img ? ' imghead' : ''}${fig ? '' : ' nofig'}">
       ${fig}
       <div class="case-info">
@@ -839,18 +891,50 @@ panels.innerHTML = CASES.map((c, i) => {
       <details class="plain"><summary>只看英文全文（默写用）</summary>${full}</details>
     </div>
   </article>`;
-}).join('');
+}
 
-function select(id){
-  $$('.tab', tabs).forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === id)));
-  $$('.case', panels).forEach(p => { p.hidden = p.id !== 'p-' + id; });
+tabs.innerHTML = FAMILIES.map((f, i) =>
+  `<button class="tab" role="tab" type="button" data-family="${f.id}"
+    aria-selected="${i === 0}">${f.name}</button>`).join('');
+
+panels.innerHTML = ALL.map((c, i) => renderCase(c, i)).join('');
+
+function renderYears(fid, activeId){
+  const f = FAMILIES.find(x => x.id === fid);
+  yeartabs.innerHTML = f.years.map(([y, topic]) => {
+    const c = CASES.find(x => x && x.family === fid && x.year === y);
+    const id = c ? c.id : fid + '-' + y;
+    return `<button class="ybtn${c ? '' : ' off'}" type="button" data-case="${id}"
+      aria-selected="${id === activeId}"
+      title="${escT(topic)}${c ? '' : '（待补充）'}">${y}${c ? '' : ' · 待'}</button>`;
+  }).join('');
+}
+
+function selectCase(caseId){
+  $$('.case', panels).forEach(p => { p.hidden = p.id !== 'p-' + caseId; });
+  $$('.ybtn', yeartabs).forEach(b => b.setAttribute('aria-selected', String(b.dataset.case === caseId)));
   closePop();
 }
+
+function selectFamily(fid){
+  currentFamily = fid;
+  $$('.tab', tabs).forEach(b => b.setAttribute('aria-selected', String(b.dataset.family === fid)));
+  const list = ALL.filter(c => c.family === fid);
+  const first = list.find(c => !c.missing) || list[0];
+  renderYears(fid, first.id);
+  selectCase(first.id);
+}
+
 tabs.addEventListener('click', e => {
   const b = e.target.closest('.tab'); if (!b) return;
-  select(b.dataset.tab);
+  selectFamily(b.dataset.family);
+});
+yeartabs.addEventListener('click', e => {
+  const b = e.target.closest('.ybtn'); if (!b || b.disabled) return;
+  selectCase(b.dataset.case);
 });
 
+selectFamily(FAMILIES[0].id);
 
 /* 展开 / 收起应用 */
 const revealBtn = $('#revealBtn');
