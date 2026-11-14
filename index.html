@@ -1850,5 +1850,16 @@ mapBody.addEventListener('click', e => {
 });
 
 </script>
+<script>
+/* 自愈：若标签没渲染出来（多半是拿到了旧缓存），带新参数重载一次 */
+(function(){
+  try{
+    if (document.querySelectorAll('#tabs .tab').length) return;
+    if (sessionStorage.getItem('dsh_reload')) return;
+    sessionStorage.setItem('dsh_reload', '1');
+    location.replace(location.pathname + '?r=' + Date.now());
+  }catch(e){}
+})();
+</script>
 </body>
 </html>
