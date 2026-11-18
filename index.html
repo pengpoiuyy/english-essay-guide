@@ -1926,6 +1926,20 @@ function mapChips(rows){
   }).join('');
 }
 
+function mapGroupSmall(){
+  const fams = FAMILIES.filter(f => f.id === 'notice' || String(f.id || '').indexOf('sm') === 0);
+  return fams.map(f => {
+    const chips = f.years.map(([y, topic]) => {
+      const c = CASES.find(x => x && x.family === f.id && x.year === y);
+      const label = y === 0 ? '模拟' : y;
+      return c
+        ? `<button class="ybtn" type="button" data-jump="${c.id}" title="${escT(topic || '')}">${label}</button>`
+        : `<span class="ybtn off" aria-disabled="true">${label}</span>`;
+    }).join('');
+    return `<div class="map-type"><b>${escT(String(f.name).replace('小·', ''))}</b><div class="yrs">${chips}</div></div>`;
+  }).join('');
+}
+
 function mapGroup(rows, order){
   const g = {};
   rows.forEach(r => { (g[r[1]] = g[r[1]] || []).push(r); });
@@ -1960,11 +1974,12 @@ function renderMap(){
     </div>
 
     <div class="map-sec">
-      <h4>四、小作文 · 按类型分类</h4>
+      <h4>四、小作文 · 按类型分类（全部 12 类）</h4>
+      <p>前五类是英语一高频；投诉、道歉、辞职、感谢、求职、咨询、祝贺、纪要主要出现在英语二或模拟题里，模板同样可以套。</p>
       <div class="map-types">
-        ${mapGroup(MAP_SMALL, ['通知', '推荐', '建议', '邀请', '介绍'])}
+        ${mapGroupSmall()}
       </div>
-      <p class="map-note">注：2024 小作文有“介绍 / 建议”两种归类说法，这里按“建议信（回复 Paul 的求助）”处理；带下划线的年份可以点开看当年的成文。</p>
+      <p class="map-note">注：2024 小作文有“介绍 / 建议”两种归类说法，这里按“建议信（回复 Paul 的求助）”处理；标“模拟”的是书上的范文题；带下划线的年份可以点开看当年的成文。</p>
     </div>`;
 }
 
