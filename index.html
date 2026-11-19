@@ -113,6 +113,10 @@ body.show-app .btn.primary{background:var(--paper);color:var(--green)}
 .rn{font:12px/1 Georgia,serif;color:#fff;background:var(--green);border-radius:5px;padding:2px 6px}
 .row-head h3{font-size:16px;margin:0}
 .rc{font-size:12px;color:var(--sub);margin-left:auto}
+.grid2.tplonly{grid-template-columns:1fr}
+.grid2.tplonly .cell.tpl{border-right:0}
+.ybtn.tpl{border-style:dashed}
+.ybtn.tpl[aria-selected="true"]{border-style:solid}
 .grid2{display:grid;grid-template-columns:1fr;background:var(--paper);border:1px solid var(--line);
   border-radius:14px;overflow:hidden}
 body.show-app .grid2{grid-template-columns:1fr 1fr}
@@ -1195,6 +1199,38 @@ CASES.forEach(c => { const m = CASE_META[c.id]; if (m){ c.family = m[0]; c.year 
     });
   })();
 
+/* 每个类型的通用模板面板：进入类型先看模板，再选年份看成文 */
+(function buildTemplatePanels(){
+  FAMILIES.forEach(f => {
+    const sample = CASES.filter(c => c && c.family === f.id && (c.paras || c.rows) && (c.paras || c.rows).length)
+      .sort((a, b) => (a.year || 9999) - (b.year || 9999))[0];
+    if (!sample) return;
+    const items = (sample.paras || sample.rows || []).map(p => ({
+      name: p.name,
+      tag: p.tag,
+      tpl: p.tpl,
+      tplCn: p.tplCn,
+      fix: p.fix,
+      app: [],
+      appCn: ''
+    }));
+    f.tplId = f.id + '_tpl';
+    CASES.push({
+      id: f.tplId,
+      family: f.id,
+      year: -1,
+      tplOnly: true,
+      label: '模板',
+      kicker: (String(f.name).indexOf('小·') === 0 ? '小作文 · ' + String(f.name).slice(2) : String(f.name)) + ' · 通用模板',
+      title: '通用模板（所有年份共用这一套）',
+      dir: '所有年份共用这一套模板，只有红色填空位不同。点上面的年份，就能看到那一年填进去的成文，与左栏逐句对照。',
+      dirCn: '',
+      paras: items
+    });
+  });
+})();
+
+
 
 const ALL = [];
 FAMILIES.forEach(f => f.years.forEach(([y, topic]) => {
@@ -1224,7 +1260,7 @@ function renderCase(c, i){
   const rows = items.map((p, j) => `
     <section class="row">
       <div class="row-head"><span class="rn">${j + 1}</span><h3>${p.name}</h3><span class="rc">${p.tag || ''}</span></div>
-      <div class="grid2">
+      <div class="grid2${c.tplOnly ? ' tplonly' : ''}">
         <div class="cell tpl">
           <span class="ctag">模 板</span>
           ${p.tpl.map(l => {
@@ -1234,11 +1270,11 @@ function renderCase(c, i){
           }).join('')}
           ${p.tplCn ? `<p class="cn">${plainCn(p.tplCn)}</p>` : ''}
         </div>
-        <div class="cell app">
+        ${c.tplOnly ? '' : `<div class="cell app">
           <span class="ctag">${c.appTag || '本题成文'}</span>
           ${p.app.map(s => '<p class="s">' + renderApp(s) + '</p>').join('')}
           ${p.appCn ? `<p class="cn">${plainCn(p.appCn)}</p>` : ''}
-        </div>
+        </div>`}
       </div>
       ${p.fix ? `<p class="fix"><b>换题只改这里</b>${p.fix}</p>` : ''}
     </section>`).join('');
@@ -1253,10 +1289,10 @@ function renderCase(c, i){
 
   return `
   <article class="case" id="p-${c.id}" role="tabpanel" ${i ? 'hidden' : ''}>
-    <div class="reveal-row">
+    ${c.tplOnly ? '' : `<div class="reveal-row">
       <button class="btn primary reveal-btn" type="button" data-reveal aria-pressed="false">查看模板的应用 →</button>
       <span class="reveal-tip">展开后右栏是成文，<b>红色</b>是模板之外的内容</span>
-    </div>
+    </div>`}
     <div class="case-head${c.img ? ' imghead' : ''}${fig ? '' : ' nofig'}">
       ${fig}
       <div class="case-info">
@@ -1269,7 +1305,7 @@ function renderCase(c, i){
       </div>
     </div>
     ${rows}
-    <div class="tail">
+    <div class="tail"${c.tplOnly ? ' hidden' : ''}>
       <span>全文约 <strong>${words}</strong> 词</span>
       <button class="btn speak" type="button" data-case="${c.id}">🔊 朗读英文</button>
       <details class="plain"><summary>只看英文全文（默写用）</summary>${full}</details>
@@ -1293,7 +1329,10 @@ function ensurePanel(c){
 
 function renderYears(fid, activeId){
   const f = FAMILIES.find(x => x.id === fid);
-  yeartabs.innerHTML = f.years.map(([y, topic]) => {
+  const tplChip = f.tplId
+    ? `<button class="ybtn tpl" type="button" data-case="${f.tplId}" aria-selected="${activeId === f.tplId}" title="通用模板">模板</button>`
+    : '';
+  yeartabs.innerHTML = tplChip + f.years.map(([y, topic]) => {
     const c = CASES.find(x => x && x.family === fid && x.year === y);
     const id = c ? c.id : fid + '-' + y;
     return `<button class="ybtn${c ? '' : ' off'}" type="button" data-case="${id}"
@@ -1303,7 +1342,7 @@ function renderYears(fid, activeId){
 }
 
 function selectCase(caseId){
-  const target = ALL.find(x => x.id === caseId);
+  const target = ALL.find(x => x.id === caseId) || CASES.find(x => x && x.id === caseId);
   if (target) ensurePanel(target);
   $$('.case', panels).forEach(p => { p.hidden = p.id !== 'p-' + caseId; });
   $$('.ybtn', yeartabs).forEach(b => b.setAttribute('aria-selected', String(b.dataset.case === caseId)));
@@ -1313,12 +1352,11 @@ function selectCase(caseId){
 function selectFamily(fid){
   currentFamily = fid;
   $$('.tab', tabs).forEach(b => b.setAttribute('aria-selected', String(b.dataset.family === fid)));
+  const fam = FAMILIES.find(x => x.id === fid);
   const list = ALL.filter(c => c.family === fid);
-  const first = list.find(c => c.id === 'c2016') ||
-    list.find(c => !c.missing && (c.paras || []).length >= 3) ||
-    list.find(c => !c.missing) || list[0];
-  renderYears(fid, first.id);
-  selectCase(first.id);
+  const first = (fam && fam.tplId) || (list.find(c => !c.missing) || list[0]).id;
+  renderYears(fid, first);
+  selectCase(first);
 }
 
 tabs.addEventListener('click', e => {
