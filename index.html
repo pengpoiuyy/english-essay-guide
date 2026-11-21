@@ -1245,27 +1245,23 @@ const PICTURE_PARAS = {
     if (!sample) return;
     if (f.id === 'pos' || f.id === 'neg'){
       const S = PICTURE_PARAS.single, D = PICTURE_PARAS.double;
-      const combined = {
-        name: '第一段 · 描述画面（单图 / 双图）',
-        tag: '单图 3 句 / 双图 4 句（末句可选）',
-        tpl: ['【单图】' + S.tpl[0], '【单图】' + S.tpl[1], '【单图】' + S.tpl[2],
-              '【双图】' + D.tpl[0], '【双图】' + D.tpl[1], '【双图】' + D.tpl[2], '【双图】' + D.tpl[3]],
-        tplCn: '【单图】' + S.cn + ' 【双图】' + D.cn,
-        fix: '单图用 As is vividly depicted in the cartoon...；两图对比用 As shown, a clear difference...。A/B 都可加分词短语修饰；caption 不会翻译可以不写。',
-        app: [], appCn: ''
-      };
-      const items2 = (sample.paras || sample.rows || []).map(p => ({
+      const rest = (sample.paras || sample.rows || []).slice(1).map(p => ({
         name: p.name, tag: p.tag, tpl: p.tpl, tplCn: p.tplCn, fix: p.fix, app: [], appCn: ''
       }));
-      items2[0] = combined;
+      const rows = [
+        { name: '第一段 · 描述画面（单图）', tag: '模板 3 句（末句可选）',
+          tpl: S.tpl.slice(), tplCn: S.cn, fix: S.fix, app: [], appCn: '' },
+        { name: '第一段 · 描述画面（双图）', tag: '模板 4 句（末句可选）',
+          tpl: D.tpl.slice(), tplCn: D.cn, fix: D.fix, app: [], appCn: '' }
+      ].concat(rest);
       f.tplId = f.id + '_tpl';
       CASES.push({
         id: f.tplId, family: f.id, year: -1, tplOnly: true, label: '模板',
         kicker: String(f.name) + ' · 通用模板',
-        title: '通用模板（单图 / 双图两种开头）',
-        dir: '这个类型有单图和两图对比两种开头，其余段落相同。点上面的年份，看那一年实际用的是哪一种。',
+        title: '通用模板（单图、双图分开看）',
+        dir: '这个类型有单图和两图对比两种开头，下面分开列出；后面几段两种都用同一套。点上面的年份，看那一年实际用的是哪一种。',
         dirCn: '',
-        paras: items2
+        paras: rows
       });
       return;
     }
