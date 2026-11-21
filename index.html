@@ -1199,12 +1199,77 @@ CASES.forEach(c => { const m = CASE_META[c.id]; if (m){ c.family = m[0]; c.year 
     });
   })();
 
+/* 图画积极 / 消极：第一段模板（单图 / 双图） */
+const PICTURE_PARAS = {
+  single: {
+    tpl: [
+      'As is vividly depicted in the cartoon, {{A}} is doing sth in {{sp}}.',
+      'Meanwhile / On the contrary, {{B}} is doing sth in {{sp}}, saying "{{xx}}" / with a/an {{xx}} expression on his/her/their face(s).',
+      'The image bears the caption "{{xx}}".（可选）'
+    ],
+    cn: '正如图画中生动描绘的，{{A}} 正在某地做某事。与此同时 / 相反地，{{B}} 正在某地做某事，说着“{{xx}}”或脸上带着 {{xx}} 表情。图片的标题是“{{xx}}”。（第三句可选）',
+    fix: '单图三句：① As is vividly depicted in the cartoon... ② Meanwhile / On the contrary... ③ caption（可选）。A/B 都可再加现在分词、过去分词短语修饰，如 Meanwhile, B, doing sth / done sth, is doing sth in sp.；不会翻译标题、字数也够，第三句可以直接不写。'
+  },
+  double: {
+    tpl: [
+      'As shown, a clear difference is evident between the two illustrations.',
+      'In the left image, {{A}} is doing sth in {{sp}}, saying "{{xx}}" / with a/an {{xx}} expression.',
+      'In contrast, {{B}} in the right image is doing sth in {{sp}}.',
+      'The images bear the caption "{{xx}}".（可选）'
+    ],
+    cn: '这两幅漫画之间有明显的区别。在左边那张图，{{A}} 正在某地做某事，说着“{{xx}}”或带着 {{xx}} 表情。而右边那张图中的 {{B}} 正在某地做某事。图片的标题是“{{xx}}”。（第四句可选）',
+    fix: '双图四句：① As shown, a clear difference is evident... ② In the left image... ③ In contrast, B in the right image... ④ caption（可选）。A/B 同样可加分词短语修饰，如 In the left image, A, doing sth, is doing sth in sp.；caption 不会写可跳过。'
+  }
+};
+
+(function unifyPicturePara(){
+  CASES.forEach(c => {
+    if (!c || !c.paras || !c.paras.length) return;
+    if (c.family !== 'pos' && c.family !== 'neg') return;
+    const firstApp = (c.paras[0].app && c.paras[0].app[0]) || '';
+    const isDouble = /^As shown/i.test(firstApp);
+    const P = isDouble ? PICTURE_PARAS.double : PICTURE_PARAS.single;
+    c.paras[0].name = isDouble ? '第一段 · 描述画面（两图对比）' : '第一段 · 描述画面（单图）';
+    c.paras[0].tpl = P.tpl.slice();
+    c.paras[0].tplCn = P.cn;
+    c.paras[0].fix = P.fix;
+    c.paras[0].tag = isDouble ? '模板 4 句（末句可选）' : '模板 3 句（末句可选）';
+  });
+})();
+
 /* 每个类型的通用模板面板：进入类型先看模板，再选年份看成文 */
 (function buildTemplatePanels(){
   FAMILIES.forEach(f => {
     const sample = CASES.filter(c => c && c.family === f.id && (c.paras || c.rows) && (c.paras || c.rows).length)
       .sort((a, b) => (a.year || 9999) - (b.year || 9999))[0];
     if (!sample) return;
+    if (f.id === 'pos' || f.id === 'neg'){
+      const S = PICTURE_PARAS.single, D = PICTURE_PARAS.double;
+      const combined = {
+        name: '第一段 · 描述画面（单图 / 双图）',
+        tag: '单图 3 句 / 双图 4 句（末句可选）',
+        tpl: ['【单图】' + S.tpl[0], '【单图】' + S.tpl[1], '【单图】' + S.tpl[2],
+              '【双图】' + D.tpl[0], '【双图】' + D.tpl[1], '【双图】' + D.tpl[2], '【双图】' + D.tpl[3]],
+        tplCn: '【单图】' + S.cn + ' 【双图】' + D.cn,
+        fix: '单图用 As is vividly depicted in the cartoon...；两图对比用 As shown, a clear difference...。A/B 都可加分词短语修饰；caption 不会翻译可以不写。',
+        app: [], appCn: ''
+      };
+      const items2 = (sample.paras || sample.rows || []).map(p => ({
+        name: p.name, tag: p.tag, tpl: p.tpl, tplCn: p.tplCn, fix: p.fix, app: [], appCn: ''
+      }));
+      items2[0] = combined;
+      f.tplId = f.id + '_tpl';
+      CASES.push({
+        id: f.tplId, family: f.id, year: -1, tplOnly: true, label: '模板',
+        kicker: String(f.name) + ' · 通用模板',
+        title: '通用模板（单图 / 双图两种开头）',
+        dir: '这个类型有单图和两图对比两种开头，其余段落相同。点上面的年份，看那一年实际用的是哪一种。',
+        dirCn: '',
+        paras: items2
+      });
+      return;
+    }
+
     const items = (sample.paras || sample.rows || []).map(p => ({
       name: p.name,
       tag: p.tag,
