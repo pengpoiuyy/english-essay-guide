@@ -953,7 +953,7 @@ const CASES = [
     ],
   },
   {
-    id: "e2026", family: "en2", year: 2026,
+    id: "e2026", family: "sta", exam: "英语二", year: 2026,
     label: "2026 英语二", appTag: "英语二成文",
     kicker: "2026 英语（二）· 大作文（图表）",
     title: "儿童户外活动看法的调查（柱状图·静态）",
@@ -966,7 +966,7 @@ const CASES = [
     ]
   },
   {
-    id: "e2025", family: "en2", year: 2025,
+    id: "e2025", family: "sta", exam: "英语二", year: 2025,
     label: "2025 英语二", appTag: "英语二成文",
     kicker: "2025 英语（二）· 大作文（图表）",
     title: "社区老年人主要休闲活动（柱状图·静态）",
@@ -979,7 +979,7 @@ const CASES = [
     ]
   },
   {
-    id: "e2024", family: "en2", year: 2024,
+    id: "e2024", family: "sta", exam: "英语二", year: 2024,
     label: "2024 英语二", appTag: "英语二成文",
     kicker: "2024 英语（二）· 大作文（图表）",
     title: "劳动实践课的主要收获（柱状图·静态）",
@@ -1080,10 +1080,14 @@ const FAMILIES = [
     [2020,'习惯'],[2021,'坚持选择'],[2022,'广泛学习知识'],[2023,'传统文化']]},
   { id:'neg', name:'图画 · 消极', years:[
     [2009,'网络的“近”与“远”'],[2011,'环境污染'],[2015,'沉迷手机']]},
-  { id:'sta', name:'图表 · 静态', years:[[2026,'养老机器人：接受度与关注点']]},
+  { id:'sta', name:'图表 · 静态', years:[
+    [2024,'劳动实践课的主要收获','英语二'],
+    [2025,'社区老年人主要休闲活动','英语二'],
+    [2026,'养老机器人：接受度与关注点','英语一'],
+    [2026,'儿童户外活动看法的调查','英语二']]},
   { id:'dyn', name:'图表 · 动态', years:[[2025,'耐用消费品拥有量']]},
   { id:'hy', name:'图画+图表', years:[[2024,'公园数量与全民健身']]},
-  { id:'en2', name:'图表 · 英语二', years:[[2024,'劳动实践课收获'],[2025,'社区老年人休闲'],[2026,'儿童户外活动']]},
+
   { id:'notice', name:'小·通知', years:[[2023,'招募 Smith 教授研究项目学生']]}
 ];
 
@@ -1230,12 +1234,12 @@ CASES.forEach(c => { const m = CASE_META[c.id]; if (m){ c.family = m[0]; c.year 
     for (let i = 0; i < CASES.length; i++){
       const c = CASES[i];
       if (!c || !c.family) continue;
-      const k = c.family + '|' + Number(c.year);
+      const k = c.family + '|' + Number(c.year) + '|' + (c.exam || '');
       if (seen.has(k)){ CASES.splice(i, 1); i--; } else seen.add(k);
     }
     FAMILIES.forEach(f => {
       const ys = new Set();
-      f.years = f.years.filter(v => { const k = Number(v[0]); if (ys.has(k)) return false; ys.add(k); return true; });
+      f.years = f.years.filter(v => { const k = Number(v[0]) + '|' + (v[2] || ''); if (ys.has(k)) return false; ys.add(k); return true; });
     });
   })();
 
@@ -1324,7 +1328,9 @@ const PICTURE_PARAS = {
       label: '模板',
       kicker: (String(f.name).indexOf('小·') === 0 ? '小作文 · ' + String(f.name).slice(2) : String(f.name)) + ' · 通用模板',
       title: '通用模板（所有年份共用这一套）',
-      dir: '所有年份共用这一套模板，只有红色填空位不同。点上面的年份，就能看到那一年填进去的成文，与左栏逐句对照。',
+      dir: (f.id === 'sta'
+          ? '英语一、英语二都考图表；下面这套是英语一的通用写法，英语二年份的开头略短（The column chart above...），点对应年份即可看到那一年自己的模板与成文。'
+          : '所有年份共用这一套模板，只有红色填空位不同。点上面的年份，就能看到那一年填进去的成文，与左栏逐句对照。'),
       dirCn: '',
       paras: items
     });
@@ -1433,12 +1439,13 @@ function renderYears(fid, activeId){
   const tplChip = f.tplId
     ? `<button class="ybtn tpl" type="button" data-case="${f.tplId}" aria-selected="${activeId === f.tplId}" title="通用模板">模板</button>`
     : '';
-  yeartabs.innerHTML = tplChip + f.years.map(([y, topic]) => {
-    const c = CASES.find(x => x && x.family === fid && x.year === y);
+  yeartabs.innerHTML = tplChip + f.years.map(([y, topic, exam]) => {
+    const c = CASES.find(x => x && x.family === fid && x.year === y && (!exam || (x.exam || '英语一') === exam))
+      || CASES.find(x => x && x.family === fid && x.year === y);
     const id = c ? c.id : fid + '-' + y;
     return `<button class="ybtn${c ? '' : ' off'}" type="button" data-case="${id}"
       aria-selected="${id === activeId}"
-      title="${escT(topic)}${c ? '' : '（待补充）'}">${y === 0 ? '模拟' : y}${c ? '' : ' · 待'}</button>`;
+      title="${escT(topic)}${exam ? ' · ' + exam : ''}${c ? '' : '（待补充）'}">${y === 0 ? '模拟' : y}${exam ? ' ' + (exam === '英语一' ? '英一' : '英二') : ''}${c ? '' : ' · 待'}</button>`;
   }).join('');
 }
 
