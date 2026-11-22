@@ -1371,6 +1371,40 @@ const PICTURE_PARAS = {
   });
 })();
 
+/* 图表类：第一段完整模板（静态 / 动态） */
+const CHART_PARAS = {
+  static: {
+    tpl: [
+      'The table/column chart/pie chart/line chart above clearly illustrates the findings from a survey on {{主题}}.',
+      'According to the data provided, it is evident that {{A}} accounts for the largest proportion at {{A%}}, while {{B}}, {{C}} and {{D}} constitute only {{B%}}, {{C%}} and {{D%}}, respectively.',
+      'Meanwhile, {{E}} represents the smallest share, at a mere {{E%}}.'
+    ],
+    cn: '上面的表格/柱状图/饼图/折线图清楚地展示了关于{{主题}}的调查结果。根据所给数据，显而易见，{{A}}占比最大，为{{A%}}；而{{B}}、{{C}}和{{D}}分别只占{{B%}}、{{C%}}和{{D%}}。与此同时，{{E}}占比最小，仅为{{E%}}。',
+    fix: '斜杠处按图的类型选一个：表格 table chart、柱状图 column chart、饼图 pie chart、折线图 line chart。红框依次替换主题、最高项与数值、其余各项与数值、最小项与数值；如果图里没有“最小项”，Meanwhile 那句可以删掉。'
+  },
+  dynamic: {
+    tpl: [
+      'The table/column chart/pie chart/line chart above clearly illustrates the findings from a survey on {{主题}}.',
+      'According to the data provided, it is evident that {{事物1}} underwent a significant/mild change between {{年份1}} and {{年份2}}, increasing/decreasing from {{数字1}} to {{数字2}}.',
+      'Meanwhile / On the contrary, (from {{年份3}} to {{年份4}},) {{事物1/事物2}} showed a dramatic/stable increase/decrease, rising/falling from {{数字3}} to {{数字4}}.'
+    ],
+    cn: '上面的表格/柱状图/饼图/折线图清楚地展示了关于{{主题}}的调查结果。根据所给数据，显而易见，{{事物1}}在{{年份1}}至{{年份2}}之间发生了显著/轻微变化，从{{数字1}}上升/下降到{{数字2}}。与此同时/相反，{{事物1/事物2}}（从{{年份3}}到{{年份4}}）出现了急剧/稳定的上升/下降，从{{数字3}}升至/降至{{数字4}}。',
+    fix: '动态图两句写法：先写第一个事物的变化（underwent a significant/mild change... increasing/decreasing from... to...），再写 Meanwhile/On the contrary 之后的变化（showed a dramatic/stable increase/decrease, rising/falling from... to...）。斜杠处各选一个；（from...to...）是可选成分，年份区间已在第一句出现时可省略。'
+  }
+};
+
+(function unifyChartPara(){
+  CASES.forEach(c => {
+    if (!c || !c.paras || !c.paras.length) return;
+    if (c.family !== 'sta' && c.family !== 'dyn') return;
+    const P = c.family === 'sta' ? CHART_PARAS.static : CHART_PARAS.dynamic;
+    c.paras[0].name = c.family === 'sta' ? '第一段 · 描述图表（静态）' : '第一段 · 描述图表（动态）';
+    c.paras[0].tpl = P.tpl.slice();
+    c.paras[0].tplCn = P.cn;
+    c.paras[0].fix = P.fix;
+  });
+})();
+
 /* 每个类型的通用模板面板：进入类型先看模板，再选年份看成文 */
 (function buildTemplatePanels(){
   FAMILIES.forEach(f => {
