@@ -113,6 +113,22 @@ body.show-app .btn.primary{background:var(--paper);color:var(--green)}
 .rn{font:12px/1 Georgia,serif;color:#fff;background:var(--green);border-radius:5px;padding:2px 6px}
 .row-head h3{font-size:16px;margin:0}
 .rc{font-size:12px;color:var(--sub);margin-left:auto}
+.whole{margin:18px 0 26px}
+.whole .wh{display:flex;align-items:center;gap:10px;margin:0 0 10px}
+.whole .wh h4{margin:0;font-size:14px;color:var(--green)}
+.whole .wh span{font-size:12px;color:var(--sub)}
+.sheet{background:#fff;border:1px solid var(--line);border-radius:12px;padding:26px 30px;max-width:720px;margin:0 auto;
+  font-family:Georgia,"Times New Roman",serif;font-size:15px;line-height:2;color:var(--ink);box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.sheet p{margin:0 0 6px}
+.sheet .ind{text-indent:2em;margin:0 0 14px}
+.sheet .sal{margin-bottom:14px}
+.sheet .close{text-align:right;margin-top:22px;margin-bottom:0}
+.sheet .sign{text-align:right;margin-top:0}
+.sheet .ttl{text-align:center;font-weight:700;font-size:16px;letter-spacing:.5px;margin-bottom:10px}
+.sheet .date{text-align:right;margin-bottom:14px}
+.sheet .hd{font-weight:700;margin:10px 0 8px}
+.sheet .meta{font-size:14px;line-height:1.9;margin-bottom:10px}
+@media (max-width:560px){.sheet{padding:18px 16px;font-size:14px}}
 .grid2.tplonly{grid-template-columns:1fr}
 .grid2.tplonly .cell.tpl{border-right:0}
 .ybtn.tpl{border-style:dashed}
@@ -1472,6 +1488,59 @@ FAMILIES.forEach(f => f.years.forEach(([y, topic]) => {
 const yeartabs = $('#yeartabs');
 let currentFamily = FAMILIES[0].id;
 
+function wholeSheet(c){
+  const fam = String(c.family || '');
+  if (!(fam === 'notice' || fam.indexOf('sm') === 0)) return '';
+  const rows = c.paras || c.rows || [];
+  if (!rows.length) return '';
+  const useTpl = !!c.tplOnly;
+  const txt = p => (useTpl ? (p.tpl || []) : (p.app || [])).join(' ');
+  const mark = s => (useTpl ? renderTpl(s) : renderApp(s));
+  const byName = n => rows.find(p => String(p.name || '').indexOf(n) >= 0);
+  const paras = rows.filter(p => /^第/.test(String(p.name || '')));
+
+  const sal = byName('称呼');
+  const title = byName('标题');
+  const date = byName('日期');
+  const meta = byName('会议信息');
+  const head = byName('正文标题');
+  const closing = byName('落款');
+  const sign = byName('署名');
+
+  const body = paras.map(p => `<p class="ind">${mark(txt(p))}</p>`).join('');
+  let inner = '';
+
+  if (sal){
+    inner += `<p class="sal">${mark(txt(sal))}</p>` + body;
+    if (closing){
+      const cl = (useTpl ? closing.tpl : closing.app) || [];
+      inner += `<p class="close">${mark(cl[0] || '')}</p>`;
+      inner += `<p class="sign">${mark(cl[1] || '')}</p>`;
+    }
+  } else if (head || meta){
+    if (title) inner += `<p class="ttl">${mark(txt(title))}</p>`;
+    if (meta) inner += `<p class="meta">${mark(txt(meta)).replace(/\n/g, '<br>')}</p>`;
+    if (head) inner += `<p class="hd">${mark(txt(head))}</p>`;
+    inner += body;
+    if (sign){
+      const s = (useTpl ? sign.tpl : sign.app) || [];
+      inner += `<p class="sign">${mark(s[0] || '')}</p>`;
+      if (s[1]) inner += `<p class="sign">${mark(s[1] || '')}</p>`;
+    }
+  } else {
+    if (title) inner += `<p class="ttl">${mark(txt(title))}</p>`;
+    if (date) inner += `<p class="date">${mark(txt(date))}</p>`;
+    inner += body;
+    if (sign) inner += `<p class="sign">${mark(txt(sign))}</p>`;
+  }
+
+  if (!inner) return '';
+  return `<section class="whole">
+    <div class="wh"><h4>整篇格式</h4><span>${useTpl ? '模板整篇排版，红框是可替换处' : '这篇成文的整篇排版，红色是换进去的内容'}</span></div>
+    <div class="sheet">${inner}</div>
+  </section>`;
+}
+
 function renderCase(c, i){
   if (c.missing){
     return `
@@ -1535,6 +1604,7 @@ function renderCase(c, i){
         ${c.steps ? `<div class="steps">${c.steps.map(([k, v]) => `<span><b>${k}</b>${v}</span>`).join('')}</div>` : ''}
       </div>
     </div>
+    ${wholeSheet(c)}
     ${rows}
     <div class="tail"${c.tplOnly ? ' hidden' : ''}>
       <span>全文约 <strong>${words}</strong> 词</span>
