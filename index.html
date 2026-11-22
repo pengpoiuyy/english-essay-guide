@@ -944,6 +944,8 @@ const CASES = [
     appTag: "2024 成文",
     kicker: "2024 英语（一）· 大作文（图画+图表）",
     title: "公园数量与全民健身",
+    img: "figs/c2024.jpg",
+    figcap: "2024 英语一 真题（图画+图表）",
     dir: "Write an essay based on the picture and the chart below. In your essay, you should 1) describe the picture and the chart briefly, 2) explain their intended meaning, and 3) give your comments.",
     dirCn: "根据下面的图画和图表写一篇短文：1）简要描述图画和图表；2）解释其寓意；3）给出你的评论。",
     paras: [
@@ -998,6 +1000,21 @@ const CASES = [
     ]
   },
 
+  {
+    id: "e2023", family: "dyn", exam: "英语二", year: 2023,
+    label: "2023 英语二", appTag: "英语二成文",
+    kicker: "2023 英语（二）· 大作文（图表）",
+    title: "居民健康素养水平（曲线图·动态）",
+    img: "figs/en2023.jpg",
+    figcap: "2023 英语二 真题图表",
+    dir: "Write an essay based on the chart below. In your essay, you should 1) describe the chart briefly, 2) explain its reasons, and 3) give your comments.",
+    dirCn: "根据下面的图表写一篇短文：1）简要描述图表；2）解释原因；3）给出你的评论。",
+    paras: [
+      {name:"第1段", tag:"", tpl:["The line chart above clearly illustrates the findings from a survey on {{主题}}. According to the data provided, it is evident that {{指标}} underwent a mild change between {{起始年}} and {{转折年}}, increasing from {{起始值}} to {{转折值}}. On the contrary, from {{转折年}} to {{结束年}}, {{指标}} showed a dramatic increase, rising from {{转折值}} to {{结束值}}."], tplCn:"上面的曲线图清楚地展示了关于{{主题}}的调查结果。根据所给数据，显而易见，{{指标}}在{{起始年}}至{{转折年}}之间变化平缓，从{{起始值}}上升到{{转折值}}。相反，从{{转折年}}到{{结束年}}，{{指标}}大幅上升，从{{转折值}}升至{{结束值}}。", app:["The line chart above clearly illustrates the findings from a survey on {{the health literacy of Chinese residents}}. According to the data provided, it is evident that {{health literacy}} underwent a mild change between {{2012}} and {{2015}}, increasing from {{8.80%}} to {{10.25%}}. On the contrary, from {{2015}} to {{2021}}, {{health literacy}} showed a dramatic increase, rising from {{10.25%}} to {{25.40%}}."], appCn:"上面的曲线图清楚地展示了关于{{中国居民健康素养水平}}的调查结果。根据所给数据，显而易见，{{健康素养}}在{{2012}}年至{{2015}}年之间变化平缓，从{{8.80%}}上升到{{10.25%}}。相反，从{{2015}}年到{{2021}}年，{{健康素养}}大幅上升，从{{10.25%}}升至{{25.40%}}。", fix:"英二动态图：① The line chart above clearly illustrates...（先写平缓段，再写 On the contrary 后的陡增段）② Delving deeper into the chart... ③ In brief, this emerging trend...。红框依次替换调查主题、指标、年份区间、数值、两个原因。"},
+      {name:"第2段", tag:"", tpl:["Delving deeper into the chart, we can discover multiple essential factors that jointly contribute to this prevalent social phenomenon. Firstly, sustained economic growth has greatly improved residents' living standards, enabling ordinary people to pursue a more diverse life and pay increasing attention to {{因素一}}. Additionally, amid fierce social competition and fast-paced modern life, people are eager to upgrade their life quality, so they actively choose and accept {{因素二}} to meet their daily and spiritual needs."], tplCn:"深入分析图表，我们可以发现多个共同促成这一普遍社会现象的重要因素。首先，持续的经济增长大幅提高了居民的生活水平，使普通人能够追求更多样化的生活，并越来越关注{{因素一}}。此外，在激烈的社会竞争和快节奏的现代生活中，人们渴望提升生活质量，因而主动选择并接受{{因素二}}，以满足日常和精神需求。", app:["Delving deeper into the chart, we can discover multiple essential factors that jointly contribute to this prevalent social phenomenon. Firstly, sustained economic growth has greatly improved residents' living standards, enabling ordinary people to pursue a more diverse life and pay increasing attention to {{personal health and scientific wellness}}. Additionally, amid fierce social competition and fast-paced modern life, people are eager to upgrade their life quality, so they actively choose and accept {{healthy living concepts}} to meet their daily and spiritual needs."], appCn:"深入分析图表，我们可以发现多个共同促成这一普遍社会现象的重要因素。首先，持续的经济增长大幅提高了居民的生活水平，使普通人能够追求更多样化的生活，并越来越关注{{个人健康与科学养生}}。此外，在激烈的社会竞争和快节奏的现代生活中，人们渴望提升生活质量，因而主动选择并接受{{健康的生活理念}}，以满足日常和精神需求。", fix:""},
+      {name:"第3段", tag:"", tpl:["In brief, this emerging trend is by no means accidental but socially necessary, which will maintain stable development in the long run. From my perspective, the government and society should offer reasonable guidance and standardized management to maximize the advantages of {{主题}}, allowing it to better serve public life and social development."], tplCn:"简而言之，这一新兴趋势绝非偶然，而是社会必然，长期来看将维持稳定发展。在我看来，政府和社会应提供合理引导和规范管理，充分发挥{{主题}}的优势，使其更好地服务公共生活与社会发展。", app:["In brief, this emerging trend is by no means accidental but socially necessary, which will maintain stable development in the long run. From my perspective, the government and society should offer reasonable guidance and standardized management to maximize the advantages of {{public health literacy promotion}}, allowing it to better serve public life and social development."], appCn:"简而言之，这一新兴趋势绝非偶然，而是社会必然，长期来看将维持稳定发展。在我看来，政府和社会应提供合理引导和规范管理，充分发挥{{公共健康素养推广}}的优势，使其更好地服务公共生活与社会发展。", fix:""}
+    ]
+  },
 ];
 /*DATA-END*/
 
@@ -1092,7 +1109,9 @@ const FAMILIES = [
     [2025,'社区老年人主要休闲活动','英语二'],
     [2026,'养老机器人：接受度与关注点','英语一'],
     [2026,'儿童户外活动看法的调查','英语二']]},
-  { id:'dyn', name:'图表 · 动态', years:[[2025,'耐用消费品拥有量']]},
+  { id:'dyn', name:'图表 · 动态', years:[
+    [2023,'居民健康素养水平','英语二'],
+    [2025,'耐用消费品拥有量','英语一']]},
   { id:'hy', name:'图画+图表', years:[[2024,'公园数量与全民健身']]},
 
   { id:'notice', name:'小·通知', years:[[2023,'招募 Smith 教授研究项目学生']]}
