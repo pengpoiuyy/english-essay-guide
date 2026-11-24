@@ -1387,7 +1387,19 @@ const PICTURE_PARAS = {
   });
 })();
 
-/* 图表类：第一段完整模板（静态 / 动态） */
+/* 图表类：完整模板（静态 / 动态 + 二三段多选） */
+const CHART_P2_TPL = [
+  '①|Delving deeper into the chart, we can discover multiple essential factors that jointly contribute to this prevalent social phenomenon. Firstly, sustained economic growth has greatly improved residents\' living standards, enabling ordinary people to pursue a more diverse life and pay increasing attention to {{主题}}.',
+  '②|Additionally, amid fierce social competition and fast-paced modern life, people are eager to upgrade their life quality, so they actively choose and accept {{主题}} to meet their daily and spiritual needs.',
+  '③|Furthermore, the rapid progress of digital technology and widespread network platforms has thoroughly changed people\'s living and consumption habits, effectively promoting the popularity of {{主题}}.（三选二）'
+];
+const CHART_P2_CN = '深入分析图表，我们可以发现多个共同促成这一普遍社会现象的重要因素。首先，持续的经济增长大幅提高了居民的生活水平，使普通人能够追求更多样化的生活，并越来越关注{{主题}}。/ 此外，在激烈的社会竞争和快节奏的现代生活中，人们渴望提升生活质量，因而主动选择并接受{{主题}}，以满足日常和精神需求。/ 更进一步，数字技术的快速进步和网络平台的普及彻底改变了人们的生活与消费习惯，有效推动了{{主题}}的流行。（三选二）';
+const CHART_P3_TPL = [
+  '①|In brief, this emerging trend is by no means accidental but socially necessary, which will maintain stable development in the long run. On a personal level, we should fully recognize and make good use of the positive value of {{主题}}, while staying rational enough to avoid its potential negative impacts.',
+  '②|From my perspective, the government and society should offer reasonable guidance and standardized management to maximize the advantages of {{主题}}, allowing it to better serve public life and social development.（二选一）'
+];
+const CHART_P3_CN = '简而言之，这一新兴趋势绝非偶然，而是社会必然，长期来看将维持稳定发展。就个人而言，我们应充分认识并善用{{主题}}的积极价值，同时保持理性，避免其潜在的负面影响。/ 在我看来，政府和社会应提供合理引导和规范管理，充分发挥{{主题}}的优势，使其更好地服务公共生活与社会发展。（二选一）';
+
 const CHART_PARAS = {
   static: {
     tpl: [
@@ -1411,13 +1423,23 @@ const CHART_PARAS = {
 
 (function unifyChartPara(){
   CASES.forEach(c => {
-    if (!c || !c.paras || !c.paras.length) return;
+    if (!c || !c.paras || c.paras.length < 3) return;
     if (c.family !== 'sta' && c.family !== 'dyn') return;
     const P = c.family === 'sta' ? CHART_PARAS.static : CHART_PARAS.dynamic;
     c.paras[0].name = c.family === 'sta' ? '第一段 · 描述图表（静态）' : '第一段 · 描述图表（动态）';
     c.paras[0].tpl = P.tpl.slice();
     c.paras[0].tplCn = P.cn;
     c.paras[0].fix = P.fix;
+
+    c.paras[1].name = '第二段 · 分析原因（三选二）';
+    c.paras[1].tpl = CHART_P2_TPL.slice();
+    c.paras[1].tplCn = CHART_P2_CN;
+    c.paras[1].fix = '三句里选两句：①Firstly 讲需求/观念 ②Additionally 讲压力/生活节奏 ③Furthermore 讲技术/平台；红色主题换成调查对象。';
+
+    c.paras[2].name = '第三段 · 结论（二选一）';
+    c.paras[2].tpl = CHART_P3_TPL.slice();
+    c.paras[2].tplCn = CHART_P3_CN;
+    c.paras[2].fix = '两句里选一句：①站在个人角度（positive value）②站在政府/社会角度（guidance and management）。';
   });
 })();
 
