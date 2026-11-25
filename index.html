@@ -285,6 +285,19 @@ footer p{margin:4px 0}
   background:var(--green);color:#fff;border:0;border-radius:99px;padding:12px 18px;
   font:14px/1 inherit;font-family:inherit;box-shadow:0 12px 30px -12px rgba(14,81,50,.75);cursor:pointer}
 .ai-fab:hover{background:#0b4229}
+.ai-fab.trans{bottom:88px;padding:10px 14px;background:#2b5c46;font-size:13px}
+.ai-fab.trans:hover{background:#1f4a37}
+.sp{border:0;background:none;color:var(--sub);cursor:pointer;font-size:12px;padding:0 3px;opacity:.5;vertical-align:middle}
+.sp:hover{opacity:1;color:var(--green)}
+.trans-mask{position:fixed;inset:0;z-index:150;background:rgba(16,22,16,.5);display:flex;align-items:center;justify-content:center;padding:16px}
+.trans-panel{width:min(560px,100%);max-height:88vh;overflow:auto;background:var(--paper);border:1px solid var(--line);
+  border-radius:16px;padding:18px 18px 20px;box-shadow:0 30px 80px -30px #000}
+.trans-panel h3{margin:0 0 12px;font-size:16px;font-family:"Songti SC","Noto Serif SC",Georgia,serif}
+.trans-panel textarea{width:100%;min-height:96px;resize:vertical;border:1px solid var(--line);border-radius:10px;
+  padding:10px 12px;font:14px/1.7 inherit;font-family:inherit;background:#fff;color:var(--ink)}
+.trans-out{margin-top:12px;padding:12px 14px;border:1px dashed var(--line);border-radius:10px;background:#fff;
+  font:15px/1.8 Georgia,serif;white-space:pre-wrap;min-height:46px;color:var(--ink)}
+.trans-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .ai-mask{position:fixed;inset:0;z-index:140;background:var(--paper);display:flex;align-items:stretch;justify-content:center;padding:0}
 .ai-panel{width:100%;height:100%;max-height:none;display:flex;flex-direction:column;overflow:hidden;background:var(--paper);border:0;
   border-radius:0;box-shadow:none}
@@ -336,7 +349,7 @@ footer p{margin:4px 0}
 
 <header class="top">
   <div class="wrap">
-    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v39</span></div>
+    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v40</span></div>
     <nav class="nav"><a href="#cmp">逐段对照</a><a href="#how">换题怎么改</a></nav>
     <button class="print" type="button" id="mapBtn">考点分布</button>
     <button class="print" type="button" onclick="window.print()">打印</button>
@@ -428,7 +441,24 @@ footer p{margin:4px 0}
 </footer>
 
 
+<button class="ai-fab trans" type="button" id="transFab">译 EN⇄中</button>
 <button class="ai-fab" type="button" id="aiFab">✍️ AI 批改</button>
+
+<div class="trans-mask" id="transMask" hidden>
+  <div class="trans-panel" role="dialog" aria-modal="true" aria-label="英汉互译">
+    <h3>英汉互译 · 单词或句子</h3>
+    <textarea id="transText" placeholder="输入英文或中文，选方向后翻译…"></textarea>
+    <div class="trans-row">
+      <button class="btn primary sm" type="button" id="transEn2zh">英 → 中</button>
+      <button class="btn plain sm" type="button" id="transZh2en">中 → 英</button>
+      <button class="btn plain sm" type="button" id="transAuto">自动</button>
+      <button class="btn plain sm" type="button" id="transCopy">复制译文</button>
+      <button class="btn plain sm" type="button" id="transClose">关闭</button>
+      <span class="ai-tip" id="transState"></span>
+    </div>
+    <div class="trans-out" id="transOut">译文会显示在这里</div>
+  </div>
+</div>
 <div class="ai-mask" id="aiMask" hidden>
   <div class="ai-panel" role="dialog" aria-modal="true" aria-label="AI 批改作文">
     <div class="ai-head">
@@ -1552,7 +1582,7 @@ function wholeSheet(c){
   const closing = byName('落款');
   const sign = byName('署名');
 
-  const body = paras.map(p => `<p class="ind">${mark(txt(p))}</p>`).join('');
+  const body = paras.map(p => `<p class="ind">${mark(txt(p))}${sayBtn(txt(p))}</p>`).join('');
   let inner = '';
 
   if (sal){
@@ -1586,6 +1616,58 @@ function wholeSheet(c){
   </section>`;
 }
 
+/* ---------- 整句朗读 ---------- */
+let __sayId = 0;
+const __SAY = {};
+function sayBtn(text){
+  const t = String(text || '').replace(/\{\{|\}\}/g, '').replace(/^[①②③AB]\|/, '').trim();
+  if (!t) return '';
+  const id = 'say' + (__sayId++);
+  __SAY[id] = t;
+  return ` <button class="sp" type="button" data-say="${id}" title="朗读这一句">🔊</button>`;
+}
+
+let __sayAudio = null;
+let __sayQueue = [];
+function __speakSystem(str){
+  if (!('speechSynthesis' in window)) return false;
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(str);
+    u.lang = 'en-US'; u.rate = 0.9;
+    speechSynthesis.speak(u);
+    return true;
+  }catch(e){ return false; }
+}
+function __nextSay(){
+  if (!__sayQueue.length) return;
+  const s = __sayQueue.shift();
+  const url = 'https://fanyi.baidu.com/gettts?lan=en&spd=3&source=web&text=' + encodeURIComponent(s.slice(0, 220));
+  if (!__sayAudio){
+    __sayAudio = new Audio();
+    __sayAudio.preload = 'auto';
+    __sayAudio.addEventListener('ended', __nextSay);
+  }
+  __sayAudio.onerror = () => { if (!__speakSystem(s)) setTimeout(__nextSay, 300); };
+  __sayAudio.src = url;
+  const p = __sayAudio.play();
+  if (p && p.catch) p.catch(() => { if (!__speakSystem(s)) __nextSay(); });
+}
+function speakSentence(text){
+  const t = String(text || '').replace(/\{\{|\}\}/g, '').trim();
+  if (!t) return;
+  const parts = (t.match(/[^.!?;]+[.!?;]?/g) || [t]).map(x => x.trim()).filter(Boolean);
+  __sayQueue = parts;
+  __nextSay();
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-say]');
+  if (!b) return;
+  e.preventDefault();
+  e.stopPropagation();
+  speakSentence(__SAY[b.dataset.say] || '');
+});
+
 function renderCase(c, i){
   if (c.missing){
     return `
@@ -1610,14 +1692,14 @@ function renderCase(c, i){
           <span class="ctag">模 板</span>
           ${p.tpl.map(l => {
             const m = l.match(/^([①②③AB])\|/);
-            if (!m) return '<p class="s">' + renderTpl(l) + '</p>';
-            return '<p class="s"><span class="opt">' + m[1] + '</span>' + renderTpl(l.slice(2)) + '</p>';
+            if (!m) return '<p class="s">' + renderTpl(l) + sayBtn(l) + '</p>';
+            return '<p class="s"><span class="opt">' + m[1] + '</span>' + renderTpl(l.slice(2)) + sayBtn(l.slice(2)) + '</p>';
           }).join('')}
           ${p.tplCn ? `<p class="cn">${plainCn(p.tplCn)}</p>` : ''}
         </div>
         ${c.tplOnly ? '' : `<div class="cell app">
           <span class="ctag">${c.appTag || '本题成文'}</span>
-          ${p.app.map(s => '<p class="s">' + renderApp(s) + '</p>').join('')}
+          ${p.app.map(s => '<p class="s">' + renderApp(s) + sayBtn(s) + '</p>').join('')}
           ${p.appCn ? `<p class="cn">${plainCn(p.appCn)}</p>` : ''}
         </div>`}
       </div>
@@ -2396,6 +2478,59 @@ panels.addEventListener('click', e => {
     }
     const item = e.target.closest('.ai-histitem');
     if (item) showRecord(loadRecords()[Number(item.dataset.i)]);
+  });
+
+  /* ---------- 英汉互译 ---------- */
+  const transMask = document.getElementById('transMask');
+  const transText = document.getElementById('transText');
+  const transOut = document.getElementById('transOut');
+  const transState = document.getElementById('transState');
+
+  function openTrans(){
+    transMask.hidden = false;
+    setTimeout(() => transText.focus(), 50);
+  }
+  function closeTrans(){ transMask.hidden = true; }
+
+  document.getElementById('transFab').addEventListener('click', openTrans);
+  document.getElementById('transClose').addEventListener('click', closeTrans);
+  transMask.addEventListener('click', e => { if (e.target === transMask) closeTrans(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !transMask.hidden) closeTrans(); });
+
+  async function doTranslate(dir){
+    const endpoint = (localStorage.getItem('ai_endpoint') || '').trim();
+    const code = (localStorage.getItem('ai_code') || '').trim();
+    const text = transText.value.trim();
+    if (!endpoint){ transState.textContent = '先到「AI 批改 → 设置」里填接口地址'; return; }
+    if (!text){ transState.textContent = '请输入要翻译的内容'; return; }
+    transState.textContent = '翻译中…';
+    transOut.textContent = '';
+    try{
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-access-code': code },
+        body: JSON.stringify({ mode: 'translate', text: text, direction: dir })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || ('接口返回 ' + res.status));
+      transOut.textContent = data.text || '（没有返回内容）';
+      transState.textContent = '';
+    }catch(e){
+      transState.textContent = '翻译失败：' + e.message;
+    }
+  }
+  document.getElementById('transEn2zh').addEventListener('click', () => doTranslate('en2zh'));
+  document.getElementById('transZh2en').addEventListener('click', () => doTranslate('zh2en'));
+  document.getElementById('transAuto').addEventListener('click', () => doTranslate('auto'));
+  document.getElementById('transCopy').addEventListener('click', () => {
+    const t = transOut.textContent.trim();
+    if (!t) return;
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(() => {
+        transState.textContent = '已复制';
+        setTimeout(() => { transState.textContent = ''; }, 1500);
+      }).catch(() => {});
+    }
   });
 
   goBtn.addEventListener('click', grade);
