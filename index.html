@@ -268,6 +268,12 @@ footer p{margin:4px 0}
 .ai-chipbtn{border:1px solid var(--line);background:var(--paper);color:var(--sub);border-radius:99px;
   padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit}
 .ai-chipbtn:hover{border-color:var(--green);color:var(--green)}
+.ai-figs{display:flex;gap:10px;flex-wrap:wrap}
+.ai-figs figure{position:relative;margin:0;text-align:center}
+.ai-figs img{max-width:110px;max-height:110px;border:1px solid var(--line);border-radius:10px;object-fit:cover;background:#fff}
+.ai-figs figcaption{font-size:11px;color:var(--sub);margin-top:3px}
+.ai-figs .x{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;border:1px solid var(--line);
+  background:#fff;color:var(--red);font-size:12px;line-height:1;cursor:pointer;padding:0}
 .ai-photo{display:flex;gap:10px;align-items:flex-start;margin-top:10px;flex-wrap:wrap}
 .ai-photo figure{margin:0;text-align:center}
 .ai-photo figcaption{font-size:11px;color:var(--sub);margin-top:4px}
@@ -329,7 +335,7 @@ footer p{margin:4px 0}
 
 <header class="top">
   <div class="wrap">
-    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v37</span></div>
+    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v38</span></div>
     <nav class="nav"><a href="#cmp">逐段对照</a><a href="#how">换题怎么改</a></nav>
     <button class="print" type="button" id="mapBtn">考点分布</button>
     <button class="print" type="button" onclick="window.print()">打印</button>
@@ -437,14 +443,14 @@ footer p{margin:4px 0}
       <textarea class="ai-text" id="aiEssay" placeholder="Paste your essay here…"></textarea>
       <div class="ai-row" style="margin-top:10px">
         <button class="btn plain" type="button" id="aiPickPrompt">📷 题目照片</button>
-        <button class="btn plain" type="button" id="aiPickEssay">📷 作文照片</button>
+        <button class="btn plain" type="button" id="aiPickEssay">📷 作文照片（可多张）</button>
         <input type="file" id="aiFilePrompt" accept="image/*" capture="environment" hidden>
-        <input type="file" id="aiFileEssay" accept="image/*" capture="environment" hidden>
-        <span class="ai-tip" id="aiFileName">题目可选，作文建议拍照</span>
+        <input type="file" id="aiFileEssay" accept="image/*" capture="environment" multiple hidden>
+        <span class="ai-tip" id="aiFileName">题目可选；作文可拍多张，按页顺序逐张添加</span>
       </div>
       <div class="ai-photo" id="aiPhotoBox" hidden>
         <figure id="aiPromptFig" hidden><img id="aiPhotoPrompt" alt="题目照片"><figcaption>题目</figcaption></figure>
-        <figure id="aiEssayFig" hidden><img id="aiPhotoEssay" alt="作文照片"><figcaption>作文</figcaption></figure>
+        <div class="ai-figs" id="aiEssayFigs"></div>
         <button class="btn sm plain" type="button" id="aiPhotoDel">移除</button>
       </div>
       <div class="ai-row">
@@ -1919,33 +1925,48 @@ panels.addEventListener('click', e => {
   mask.addEventListener('click', e => { if (e.target === mask) close(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !mask.hidden) close(); });
 
-  /* ---------- 拍照 / 上传（题目 + 作文） ---------- */
+  /* ---------- 拍照 / 上传（题目 + 作文，作文可多张） ---------- */
   const filePrompt = document.getElementById('aiFilePrompt');
   const fileEssay = document.getElementById('aiFileEssay');
   const photoBox = document.getElementById('aiPhotoBox');
   const figPrompt = document.getElementById('aiPromptFig');
-  const figEssay = document.getElementById('aiEssayFig');
   const imgPrompt = document.getElementById('aiPhotoPrompt');
-  const imgEssay = document.getElementById('aiPhotoEssay');
+  const essayFigs = document.getElementById('aiEssayFigs');
   const fileTip = document.getElementById('aiFileName');
-  let dataPrompt = '', dataEssay = '';
+  let dataPrompt = '';
+  let essayImages = [];
 
   document.getElementById('aiPickPrompt').addEventListener('click', () => filePrompt.click());
   document.getElementById('aiPickEssay').addEventListener('click', () => fileEssay.click());
 
+  function renderEssayFigs(){
+    essayFigs.innerHTML = essayImages.map((src, i) =>
+      `<figure><img src="${src}" alt="作文第${i + 1}页"><figcaption>第 ${i + 1} 页</figcaption>` +
+      `<button class="x" type="button" data-i="${i}" title="删除这张">×</button></figure>`).join('');
+  }
+
+  essayFigs.addEventListener('click', e => {
+    const b = e.target.closest('[data-i]');
+    if (!b) return;
+    essayImages.splice(Number(b.dataset.i), 1);
+    renderEssayFigs();
+    syncBox();
+  });
+
   function syncBox(){
     figPrompt.hidden = !dataPrompt;
-    figEssay.hidden = !dataEssay;
-    photoBox.hidden = !(dataPrompt || dataEssay);
+    photoBox.hidden = !(dataPrompt || essayImages.length);
     const parts = [];
     if (dataPrompt) parts.push('题目已选');
-    if (dataEssay) parts.push('作文已选');
-    fileTip.textContent = parts.length ? parts.join('，') : '题目可选，作文建议拍照';
+    if (essayImages.length) parts.push('作文 ' + essayImages.length + ' 张');
+    fileTip.textContent = parts.length ? parts.join('，') : '题目可选；作文可拍多张，按页顺序逐张添加';
   }
 
   function resetPhoto(){
-    dataPrompt = ''; dataEssay = '';
-    imgPrompt.removeAttribute('src'); imgEssay.removeAttribute('src');
+    dataPrompt = '';
+    essayImages = [];
+    imgPrompt.removeAttribute('src');
+    essayFigs.innerHTML = '';
     filePrompt.value = ''; fileEssay.value = '';
     syncBox();
   }
@@ -1976,23 +1997,37 @@ panels.addEventListener('click', e => {
     });
   }
 
-  function bind(input, apply, imgEl){
-    input.addEventListener('change', async () => {
-      const f = input.files && input.files[0];
-      if (!f) return;
-      fileTip.textContent = '处理中…';
+  filePrompt.addEventListener('change', async () => {
+    const f = filePrompt.files && filePrompt.files[0];
+    if (!f) return;
+    fileTip.textContent = '处理中…';
+    try{
+      dataPrompt = await compress(f);
+      imgPrompt.src = dataPrompt;
+      syncBox();
+    }catch(e){
+      fileTip.textContent = '图片处理失败，换一张试试';
+    }
+  });
+
+  fileEssay.addEventListener('change', async () => {
+    const files = Array.from(fileEssay.files || []);
+    if (!files.length) return;
+    fileTip.textContent = '处理中…';
+    for (const f of files){
+      if (essayImages.length >= 6){
+        fileTip.textContent = '最多 6 张，后面的没有加入';
+        break;
+      }
       try{
         const d = await compress(f);
-        apply(d);
-        imgEl.src = d;
-        syncBox();
-      }catch(e){
-        fileTip.textContent = '图片处理失败，换一张试试';
-      }
-    });
-  }
-  bind(filePrompt, d => { dataPrompt = d; }, imgPrompt);
-  bind(fileEssay, d => { dataEssay = d; }, imgEssay);
+        essayImages.push(d);
+      }catch(e){}
+    }
+    fileEssay.value = '';
+    renderEssayFigs();
+    syncBox();
+  });
 
   document.getElementById('aiClear').addEventListener('click', () => {
     essayEl.value = ''; resultEl.hidden = true; resultEl.innerHTML = ''; stateEl.textContent = '';
@@ -2145,7 +2180,7 @@ panels.addEventListener('click', e => {
     const code = (localStorage.getItem('ai_code') || '').trim();
     const essay = essayEl.value.trim();
     if (!endpoint){ settings.classList.add('on'); stateEl.textContent = '先填接口地址'; return; }
-    if (!dataEssay && essay.length < 60){ stateEl.textContent = '拍一张作文照片，或贴一段完整作文'; return; }
+    if (!essayImages.length && essay.length < 60){ stateEl.textContent = '拍作文照片（可多张），或贴一段完整作文'; return; }
 
     goBtn.disabled = true; goBtn.textContent = '批改中…'; stateEl.textContent = '';
     resultEl.hidden = true;
@@ -2155,7 +2190,7 @@ panels.addEventListener('click', e => {
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-access-code': code },
-        body: JSON.stringify({ essay: essay, type: typeEl.value, image: dataEssay, promptImage: dataPrompt })
+        body: JSON.stringify({ essay: essay, type: typeEl.value, images: essayImages, promptImage: dataPrompt })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || ('接口返回 ' + res.status));
@@ -2170,10 +2205,11 @@ panels.addEventListener('click', e => {
       msgsEl.innerHTML = '';
       chatBox.hidden = false;
       if (!data.mock){
-        const thumbEssay = dataEssay ? await makeThumb(dataEssay) : '';
+        const thumbEssay = essayImages.length ? await makeThumb(essayImages[0]) : '';
         const thumbPrompt = dataPrompt ? await makeThumb(dataPrompt) : '';
         saveRecord({
           essayThumb: thumbEssay,
+          essayCount: essayImages.length,
           promptThumb: thumbPrompt,
           ts: Date.now(),
           type: typeEl.value,
