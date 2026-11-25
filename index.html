@@ -287,7 +287,10 @@ footer p{margin:4px 0}
 .ai-fab:hover{background:#0b4229}
 .ai-fab.trans{bottom:88px;padding:10px 14px;background:#2b5c46;font-size:13px}
 .ai-fab.trans:hover{background:#1f4a37}
-.sp{border:0;background:none;color:var(--sub);cursor:pointer;font-size:12px;padding:0 3px;opacity:.5;vertical-align:middle}
+.sp{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:0;
+  border-radius:50%;background:var(--green-soft);color:var(--green);cursor:pointer;font-size:14px;
+  margin:0 4px;vertical-align:middle;opacity:.95;padding:0}
+.sp:active{transform:scale(.92)}
 .sp:hover{opacity:1;color:var(--green)}
 .trans-mask{position:fixed;inset:0;z-index:150;background:rgba(16,22,16,.5);display:flex;align-items:center;justify-content:center;padding:16px}
 .trans-panel{width:min(560px,100%);max-height:88vh;overflow:auto;background:var(--paper);border:1px solid var(--line);
@@ -349,7 +352,7 @@ footer p{margin:4px 0}
 
 <header class="top">
   <div class="wrap">
-    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v40</span></div>
+    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v41</span></div>
     <nav class="nav"><a href="#cmp">逐段对照</a><a href="#how">换题怎么改</a></nav>
     <button class="print" type="button" id="mapBtn">考点分布</button>
     <button class="print" type="button" onclick="window.print()">打印</button>
@@ -1639,25 +1642,55 @@ function __speakSystem(str){
     return true;
   }catch(e){ return false; }
 }
-function __nextSay(){
-  if (!__sayQueue.length) return;
-  const s = __sayQueue.shift();
-  const url = 'https://fanyi.baidu.com/gettts?lan=en&spd=3&source=web&text=' + encodeURIComponent(s.slice(0, 220));
+async function __ttsSrc(s){
+  const endpoint = (localStorage.getItem('ai_endpoint') || window.__AI_EP || '').trim();
+  const code = (localStorage.getItem('ai_code') || window.__AI_CODE || '').trim();
+  if (endpoint){
+    try{
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-access-code': code },
+        body: JSON.stringify({ mode: 'tts', text: s })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.audio) return data.audio;
+    }catch(e){}
+  }
+  return 'https://fanyi.baidu.com/gettts?lan=en&spd=3&source=web&text=' + encodeURIComponent(s.slice(0, 200));
+}
+
+function __ensureAudio(){
   if (!__sayAudio){
     __sayAudio = new Audio();
     __sayAudio.preload = 'auto';
-    __sayAudio.addEventListener('ended', __nextSay);
+    __sayAudio.addEventListener('ended', () => __nextSay());
   }
-  __sayAudio.onerror = () => { if (!__speakSystem(s)) setTimeout(__nextSay, 300); };
-  __sayAudio.src = url;
-  const p = __sayAudio.play();
-  if (p && p.catch) p.catch(() => { if (!__speakSystem(s)) __nextSay(); });
+  return __sayAudio;
 }
-function speakSentence(text){
+
+async function __nextSay(){
+  if (!__sayQueue.length){
+    if (__sayDone){ const f = __sayDone; __sayDone = null; f(); }
+    return;
+  }
+  const s = __sayQueue.shift();
+  const a = __ensureAudio();
+  const src = await __ttsSrc(s);
+  a.onerror = () => { if (!__speakSystem(s)) setTimeout(__nextSay, 200); };
+  try{
+    a.src = src;
+    await a.play();
+  }catch(e){
+    if (!__speakSystem(s)) setTimeout(__nextSay, 200);
+  }
+}
+let __sayDone = null;
+function speakSentence(text, onDone){
   const t = String(text || '').replace(/\{\{|\}\}/g, '').trim();
   if (!t) return;
   const parts = (t.match(/[^.!?;]+[.!?;]?/g) || [t]).map(x => x.trim()).filter(Boolean);
   __sayQueue = parts;
+  __sayDone = typeof onDone === 'function' ? onDone : null;
   __nextSay();
 }
 document.addEventListener('click', e => {
@@ -1959,18 +1992,20 @@ panels.addEventListener('keydown', e => {
   showPop(w);
 });
 
-/* 朗读 */
-let utter = null;
+/* 朗读整篇 */
 panels.addEventListener('click', e => {
   const btn = e.target.closest('.speak'); if (!btn) return;
-  if (!('speechSynthesis' in window)) { btn.textContent = '当前浏览器不支持朗读'; return; }
-  if (speechSynthesis.speaking) { speechSynthesis.cancel(); btn.textContent = '🔊 朗读英文'; return; }
+  if (__sayAudio && !__sayAudio.paused){
+    __sayQueue = []; __sayDone = null;
+    try{ __sayAudio.pause(); __sayAudio.currentTime = 0; }catch(err){}
+    btn.textContent = '🔊 朗读英文';
+    return;
+  }
   const c = CASES.find(x => x.id === btn.dataset.case);
-  utter = new SpeechSynthesisUtterance(c.paras.map(p => p.app.join(' ').replace(/\{\{|\}\}/g, '')).join(' '));
-  utter.lang = 'en-US'; utter.rate = 0.92;
-  utter.onend = () => { btn.textContent = '🔊 朗读英文'; };
+  if (!c) return;
+  const text = c.paras.map(p => p.app.join(' ').replace(/\{\{|\}\}/g, '')).join(' ');
   btn.textContent = '⏹ 停止';
-  speechSynthesis.speak(utter);
+  speakSentence(text, () => { btn.textContent = '🔊 朗读英文'; });
 });
 
 /* ---------- AI 批改 ---------- */
@@ -1990,6 +2025,8 @@ panels.addEventListener('click', e => {
   // 部署后端后，把地址填在这里，所有人打开就能直接用
   const AI_DEFAULT_ENDPOINT = 'https://detailed-grasshopper-d9a0e9b307d-1420335919.ap-shanghai.app.tcloudbase.com/grade';
   const AI_DEFAULT_CODE = 'essay2026';
+  window.__AI_EP = AI_DEFAULT_ENDPOINT;
+  window.__AI_CODE = AI_DEFAULT_CODE;
 
   epEl.value = localStorage.getItem('ai_endpoint') || AI_DEFAULT_ENDPOINT;
   codeEl.value = localStorage.getItem('ai_code') || AI_DEFAULT_CODE;
@@ -2120,6 +2157,7 @@ panels.addEventListener('click', e => {
   document.getElementById('aiCfg').addEventListener('click', () => settings.classList.toggle('on'));
   document.getElementById('aiSave').addEventListener('click', () => {
     localStorage.setItem('ai_endpoint', epEl.value.trim());
+    window.__AI_EP = epEl.value.trim();
     localStorage.setItem('ai_code', codeEl.value.trim());
     settings.classList.remove('on');
     fab.hidden = false;
@@ -2259,8 +2297,8 @@ panels.addEventListener('click', e => {
   }
 
   async function grade(){
-    const endpoint = (localStorage.getItem('ai_endpoint') || '').trim();
-    const code = (localStorage.getItem('ai_code') || '').trim();
+    const endpoint = (localStorage.getItem('ai_endpoint') || AI_DEFAULT_ENDPOINT || '').trim();
+    const code = (localStorage.getItem('ai_code') || AI_DEFAULT_CODE || '').trim();
     const essay = essayEl.value.trim();
     if (!endpoint){ settings.classList.add('on'); stateEl.textContent = '先填接口地址'; return; }
     if (!essayImages.length && essay.length < 60){ stateEl.textContent = '拍作文照片（可多张），或贴一段完整作文'; return; }
@@ -2326,8 +2364,8 @@ panels.addEventListener('click', e => {
   }
 
   async function ask(q){
-    const endpoint = (localStorage.getItem('ai_endpoint') || '').trim();
-    const code = (localStorage.getItem('ai_code') || '').trim();
+    const endpoint = (localStorage.getItem('ai_endpoint') || AI_DEFAULT_ENDPOINT || '').trim();
+    const code = (localStorage.getItem('ai_code') || AI_DEFAULT_CODE || '').trim();
     const question = (q || '').trim();
     if (!endpoint || !chatCtx || !question || chatting) return;
     chatting = true; sendBtn.disabled = true; sendBtn.textContent = '回答中…';
@@ -2498,8 +2536,8 @@ panels.addEventListener('click', e => {
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !transMask.hidden) closeTrans(); });
 
   async function doTranslate(dir){
-    const endpoint = (localStorage.getItem('ai_endpoint') || '').trim();
-    const code = (localStorage.getItem('ai_code') || '').trim();
+    const endpoint = (localStorage.getItem('ai_endpoint') || AI_DEFAULT_ENDPOINT || '').trim();
+    const code = (localStorage.getItem('ai_code') || AI_DEFAULT_CODE || '').trim();
     const text = transText.value.trim();
     if (!endpoint){ transState.textContent = '先到「AI 批改 → 设置」里填接口地址'; return; }
     if (!text){ transState.textContent = '请输入要翻译的内容'; return; }
