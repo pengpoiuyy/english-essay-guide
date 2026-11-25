@@ -285,14 +285,15 @@ footer p{margin:4px 0}
   background:var(--green);color:#fff;border:0;border-radius:99px;padding:12px 18px;
   font:14px/1 inherit;font-family:inherit;box-shadow:0 12px 30px -12px rgba(14,81,50,.75);cursor:pointer}
 .ai-fab:hover{background:#0b4229}
-.ai-mask{position:fixed;inset:0;z-index:140;background:rgba(16,22,16,.55);display:flex;align-items:center;justify-content:center;padding:16px}
-.ai-panel{width:min(720px,100%);max-height:90vh;overflow:auto;background:var(--paper);border:1px solid var(--line);
-  border-radius:16px;box-shadow:0 30px 80px -30px #000}
+.ai-mask{position:fixed;inset:0;z-index:140;background:var(--paper);display:flex;align-items:stretch;justify-content:center;padding:0}
+.ai-panel{width:100%;height:100%;max-height:none;display:flex;flex-direction:column;overflow:hidden;background:var(--paper);border:0;
+  border-radius:0;box-shadow:none}
 .ai-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);
   position:sticky;top:0;background:var(--paper);z-index:2}
 .ai-head h3{margin:0;font-size:16.5px;font-family:"Songti SC","Noto Serif SC",Georgia,serif}
 .ai-head .btn{margin-left:auto}
-.ai-body{padding:16px 18px 20px}
+.ai-body{padding:20px 24px 44px;flex:1;overflow:auto;width:100%;max-width:900px;margin:0 auto}
+@media (max-width:560px){.ai-body{padding:16px 14px 40px}}
 .ai-text{width:100%;min-height:190px;resize:vertical;border:1px solid var(--line);border-radius:10px;
   padding:10px 12px;font:14.5px/1.7 Georgia,serif;color:var(--ink);background:#fff;margin-top:8px}
 .ai-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
@@ -335,7 +336,7 @@ footer p{margin:4px 0}
 
 <header class="top">
   <div class="wrap">
-    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v38</span></div>
+    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v39</span></div>
     <nav class="nav"><a href="#cmp">逐段对照</a><a href="#how">换题怎么改</a></nav>
     <button class="print" type="button" id="mapBtn">考点分布</button>
     <button class="print" type="button" onclick="window.print()">打印</button>
