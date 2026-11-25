@@ -245,6 +245,12 @@ footer p{margin:4px 0}
 .ai-plan .rev{font-family:Georgia,serif;font-weight:600}
 .ai-essay{margin:8px 0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff}
 .ai-essay pre{white-space:pre-wrap;font:13.5px/1.8 Georgia,serif;margin:0;color:var(--ink)}
+.ai-photos{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 4px}
+.ai-photos figure{margin:0;text-align:center}
+.ai-photos img{max-width:130px;border:1px solid var(--line);border-radius:8px;cursor:zoom-in;background:#fff}
+.ai-photos figure.zoom img{max-width:100%;cursor:zoom-out}
+.ai-photos figcaption{font-size:11px;color:var(--sub);margin-top:4px}
+.ai-histitem .thumb{width:34px;height:34px;object-fit:cover;border-radius:6px;border:1px solid var(--line);flex:none}
 .ai-histlist{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
 .ai-histitem{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);
   border-radius:10px;margin:6px 0;font-size:13px;cursor:pointer;background:#fff}
@@ -323,7 +329,7 @@ footer p{margin:4px 0}
 
 <header class="top">
   <div class="wrap">
-    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v36</span></div>
+    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v37</span></div>
     <nav class="nav"><a href="#cmp">逐段对照</a><a href="#how">换题怎么改</a></nav>
     <button class="print" type="button" id="mapBtn">考点分布</button>
     <button class="print" type="button" onclick="window.print()">打印</button>
@@ -2164,7 +2170,11 @@ panels.addEventListener('click', e => {
       msgsEl.innerHTML = '';
       chatBox.hidden = false;
       if (!data.mock){
+        const thumbEssay = dataEssay ? await makeThumb(dataEssay) : '';
+        const thumbPrompt = dataPrompt ? await makeThumb(dataPrompt) : '';
         saveRecord({
+          essayThumb: thumbEssay,
+          promptThumb: thumbPrompt,
           ts: Date.now(),
           type: typeEl.value,
           essayText: (data.transcript || essay || '').slice(0, 3000),
@@ -2244,6 +2254,29 @@ panels.addEventListener('click', e => {
     const p = n => (n < 10 ? '0' + n : '' + n);
     return (d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
   }
+  function makeThumb(dataUrl, max, quality){
+    return new Promise(resolve => {
+      if (!dataUrl) return resolve('');
+      const img = new Image();
+      img.onload = () => {
+        try{
+          const m = max || 480;
+          let w = img.width, hh = img.height;
+          if (Math.max(w, hh) > m){
+            const r = m / Math.max(w, hh);
+            w = Math.round(w * r); hh = Math.round(hh * r);
+          }
+          const cv = document.createElement('canvas');
+          cv.width = w; cv.height = hh;
+          cv.getContext('2d').drawImage(img, 0, 0, w, hh);
+          resolve(cv.toDataURL('image/jpeg', quality || 0.62));
+        }catch(e){ resolve(''); }
+      };
+      img.onerror = () => resolve('');
+      img.src = dataUrl;
+    });
+  }
+
   function saveRecord(rec){
     const arr = loadRecords();
     arr.unshift(rec);
@@ -2257,6 +2290,7 @@ panels.addEventListener('click', e => {
     } else {
       html += arr.map((r, i) =>
         `<div class="ai-histitem" data-i="${i}">
+          ${r.essayThumb ? `<img class="thumb" src="${r.essayThumb}" alt="">` : ''}
           <span class="t">${fmtTime(r.ts)}</span>
           <span class="s">${r.result && r.result.score != null ? r.result.score : '-'} 分</span>
           <span class="b">${esc(r.result && r.result.band || '')}　${esc(String(r.snippet || '').slice(0, 26))}</span>
@@ -2280,8 +2314,20 @@ panels.addEventListener('click', e => {
     chatHistory = [];
     msgsEl.innerHTML = '';
     chatBox.hidden = false;
+    if (rec.promptThumb || rec.essayThumb){
+      const box = document.createElement('div');
+      box.className = 'ai-photos';
+      box.innerHTML = (rec.promptThumb ? `<figure><img src="${rec.promptThumb}" alt="题目"><figcaption>题目</figcaption></figure>` : '') +
+                      (rec.essayThumb ? `<figure><img src="${rec.essayThumb}" alt="作文"><figcaption>作文</figcaption></figure>` : '');
+      resultEl.appendChild(box);
+    }
     resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+
+  resultEl.addEventListener('click', e => {
+    const fig = e.target.closest('.ai-photos figure');
+    if (fig) fig.classList.toggle('zoom');
+  });
 
   histBtn.addEventListener('click', () => {
     if (histList.hidden){
