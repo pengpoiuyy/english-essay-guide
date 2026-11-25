@@ -292,9 +292,22 @@ footer p{margin:4px 0}
   margin:0 4px;vertical-align:middle;opacity:.95;padding:0}
 .sp:active{transform:scale(.92)}
 .sp:hover{opacity:1;color:var(--green)}
-.trans-mask{position:fixed;inset:0;z-index:150;background:rgba(16,22,16,.5);display:flex;align-items:center;justify-content:center;padding:16px}
-.trans-panel{width:min(560px,100%);max-height:88vh;overflow:auto;background:var(--paper);border:1px solid var(--line);
-  border-radius:16px;padding:18px 18px 20px;box-shadow:0 30px 80px -30px #000}
+.trans-mask{position:fixed;inset:0;z-index:150;background:rgba(16,22,16,.42);display:flex;align-items:flex-end;justify-content:center;padding:0}
+.trans-panel{width:min(620px,100%);max-height:86vh;overflow:auto;background:var(--paper);border:1px solid var(--line);
+  border-radius:18px 18px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -20px 60px -30px #000}
+@media (min-width:720px){
+  .trans-mask{align-items:center;padding:16px}
+  .trans-panel{border-radius:18px;padding:20px}
+}
+.trans-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.trans-head h3{margin:0;font-size:15.5px;font-family:"Songti SC","Noto Serif SC",Georgia,serif;flex:1}
+.trans-recent{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 2px}
+.trans-recent button{max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;
+  border:1px solid var(--line);background:#fff;border-radius:999px;padding:3px 10px;color:var(--sub);cursor:pointer}
+.trans-recent button:hover{border-color:var(--green);color:var(--green)}
+.sel-bubble{position:absolute;z-index:130;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);
+  background:#fff;color:var(--green);font-size:14px;box-shadow:0 6px 18px -8px #000;cursor:pointer}
+.sel-bubble:active{transform:scale(.94)}
 .trans-panel h3{margin:0 0 12px;font-size:16px;font-family:"Songti SC","Noto Serif SC",Georgia,serif}
 .trans-panel textarea{width:100%;min-height:96px;resize:vertical;border:1px solid var(--line);border-radius:10px;
   padding:10px 12px;font:14px/1.7 inherit;font-family:inherit;background:#fff;color:var(--ink)}
@@ -352,7 +365,7 @@ footer p{margin:4px 0}
 
 <header class="top">
   <div class="wrap">
-    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v42</span></div>
+    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v43</span></div>
     <nav class="nav"><a href="#cmp">逐段对照</a><a href="#how">换题怎么改</a></nav>
     <button class="print" type="button" id="mapBtn">考点分布</button>
     <button class="print" type="button" onclick="window.print()">打印</button>
@@ -449,19 +462,23 @@ footer p{margin:4px 0}
 
 <div class="trans-mask" id="transMask" hidden>
   <div class="trans-panel" role="dialog" aria-modal="true" aria-label="英汉互译">
-    <h3>英汉互译 · 单词或句子</h3>
-    <textarea id="transText" placeholder="输入英文或中文，选方向后翻译…"></textarea>
-    <div class="trans-row">
-      <button class="btn primary sm" type="button" id="transEn2zh">英 → 中</button>
-      <button class="btn plain sm" type="button" id="transZh2en">中 → 英</button>
-      <button class="btn plain sm" type="button" id="transAuto">自动</button>
-      <button class="btn plain sm" type="button" id="transCopy">复制译文</button>
+    <div class="trans-head">
+      <h3>翻译 · 选中句子可直接译</h3>
       <button class="btn plain sm" type="button" id="transClose">关闭</button>
+    </div>
+    <textarea id="transText" placeholder="粘贴或输入英文/中文；页面上选中一段文字，再点这里会自动带进来"></textarea>
+    <div class="trans-row">
+      <button class="btn primary sm" type="button" id="transGo">翻译</button>
+      <button class="btn plain sm" type="button" id="transEn2zh">英 → 中</button>
+      <button class="btn plain sm" type="button" id="transZh2en">中 → 英</button>
+      <button class="btn plain sm" type="button" id="transCopy">复制</button>
       <span class="ai-tip" id="transState"></span>
     </div>
+    <div class="trans-recent" id="transRecent"></div>
     <div class="trans-out" id="transOut">译文会显示在这里</div>
   </div>
 </div>
+<button class="sel-bubble" id="selBubble" type="button" hidden>译</button>
 <div class="ai-mask" id="aiMask" hidden>
   <div class="ai-panel" role="dialog" aria-modal="true" aria-label="AI 批改作文">
     <div class="ai-head">
@@ -2551,14 +2568,42 @@ panels.addEventListener('click', e => {
   const transText = document.getElementById('transText');
   const transOut = document.getElementById('transOut');
   const transState = document.getElementById('transState');
+  const transRecent = document.getElementById('transRecent');
+  const selBubble = document.getElementById('selBubble');
+  const RECENT_KEY = 'trans_recent_v1';
 
-  function openTrans(){
+  function loadRecent(){
+    try{ return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); }catch(e){ return []; }
+  }
+  function pushRecent(src, out){
+    const arr = loadRecent().filter(x => x.src !== src);
+    arr.unshift({ src: src, out: out });
+    try{ localStorage.setItem(RECENT_KEY, JSON.stringify(arr.slice(0, 6))); }catch(e){}
+  }
+  function renderRecent(){
+    const arr = loadRecent();
+    transRecent.innerHTML = arr.map(x =>
+      `<button type="button" data-src="${esc(x.src)}" title="${esc(x.out)}">${esc(x.src.slice(0, 18))}</button>`).join('');
+  }
+  transRecent.addEventListener('click', e => {
+    const b = e.target.closest('[data-src]');
+    if (!b) return;
+    transText.value = b.dataset.src;
+    doTranslate('auto');
+  });
+
+  function openTrans(prefill){
     transMask.hidden = false;
-    setTimeout(() => transText.focus(), 50);
+    renderRecent();
+    if (prefill) transText.value = prefill;
+    setTimeout(() => { try{ transText.focus(); transText.setSelectionRange(transText.value.length, transText.value.length); }catch(e){} }, 60);
   }
   function closeTrans(){ transMask.hidden = true; }
 
-  document.getElementById('transFab').addEventListener('click', openTrans);
+  document.getElementById('transFab').addEventListener('click', () => {
+    const sel = window.getSelection ? String(window.getSelection() || '').trim() : '';
+    openTrans(sel && sel.length <= 400 ? sel : '');
+  });
   document.getElementById('transClose').addEventListener('click', closeTrans);
   transMask.addEventListener('click', e => { if (e.target === transMask) closeTrans(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !transMask.hidden) closeTrans(); });
@@ -2567,27 +2612,29 @@ panels.addEventListener('click', e => {
     const endpoint = (localStorage.getItem('ai_endpoint') || AI_DEFAULT_ENDPOINT || '').trim();
     const code = (localStorage.getItem('ai_code') || AI_DEFAULT_CODE || '').trim();
     const text = transText.value.trim();
-    if (!endpoint){ transState.textContent = '先到「AI 批改 → 设置」里填接口地址'; return; }
-    if (!text){ transState.textContent = '请输入要翻译的内容'; return; }
+    if (!text){ transState.textContent = '请输入或选中要翻译的内容'; return; }
     transState.textContent = '翻译中…';
     transOut.textContent = '';
     try{
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-access-code': code },
-        body: JSON.stringify({ mode: 'translate', text: text, direction: dir })
+        body: JSON.stringify({ mode: 'translate', text: text, direction: dir || 'auto' })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || ('接口返回 ' + res.status));
       transOut.textContent = data.text || '（没有返回内容）';
       transState.textContent = '';
+      pushRecent(text, transOut.textContent);
+      renderRecent();
     }catch(e){
       transState.textContent = '翻译失败：' + e.message;
     }
   }
+
+  document.getElementById('transGo').addEventListener('click', () => doTranslate('auto'));
   document.getElementById('transEn2zh').addEventListener('click', () => doTranslate('en2zh'));
   document.getElementById('transZh2en').addEventListener('click', () => doTranslate('zh2en'));
-  document.getElementById('transAuto').addEventListener('click', () => doTranslate('auto'));
   document.getElementById('transCopy').addEventListener('click', () => {
     const t = transOut.textContent.trim();
     if (!t) return;
@@ -2598,8 +2645,39 @@ panels.addEventListener('click', e => {
       }).catch(() => {});
     }
   });
+  transText.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)){ e.preventDefault(); doTranslate('auto'); }
+  });
 
-  goBtn.addEventListener('click', grade);
+  /* 选中文字后冒出「译」按钮 */
+  let selTimer = null;
+  function hideSel(){ selBubble.hidden = true; }
+  function checkSel(){
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount || sel.isCollapsed){ hideSel(); return; }
+    const txt = String(sel).trim();
+    if (!txt || txt.length > 400){ hideSel(); return; }
+    const node = sel.anchorNode;
+    if (!node || !document.body.contains(node)){ hideSel(); return; }
+    if (node.nodeType === 1 && (node.closest('#aiMask') || node.closest('#transMask'))){ hideSel(); return; }
+    const rect = sel.getRangeAt(0).getBoundingClientRect();
+    if (!rect || (!rect.width && !rect.height)){ hideSel(); return; }
+    selBubble.style.left = Math.round(rect.left + window.scrollX + rect.width / 2 - 17) + 'px';
+    selBubble.style.top = Math.round(rect.top + window.scrollY - 42) + 'px';
+    selBubble.hidden = false;
+  }
+  document.addEventListener('selectionchange', () => {
+    clearTimeout(selTimer);
+    selTimer = setTimeout(checkSel, 220);
+  });
+  document.addEventListener('scroll', hideSel, { passive: true });
+  selBubble.addEventListener('click', () => {
+    const sel = String(window.getSelection() || '').trim();
+    hideSel();
+    if (sel) openTrans(sel);
+  });
+
+  goBtn.addEventListener('click', grade);  goBtn.addEventListener('click', grade);
 
   // 复制改写范文
   resultEl.addEventListener('click', e => {
