@@ -245,6 +245,13 @@ footer p{margin:4px 0}
 .ai-plan .rev{font-family:Georgia,serif;font-weight:600}
 .ai-essay{margin:8px 0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff}
 .ai-essay pre{white-space:pre-wrap;font:13.5px/1.8 Georgia,serif;margin:0;color:var(--ink)}
+.ai-histlist{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+.ai-histitem{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);
+  border-radius:10px;margin:6px 0;font-size:13px;cursor:pointer;background:#fff}
+.ai-histitem:hover{border-color:var(--green)}
+.ai-histitem .t{color:var(--sub);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ai-histitem .s{font-weight:700;color:var(--green);white-space:nowrap}
+.ai-histitem .b{color:var(--sub);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ai-chat{margin-top:18px;border-top:1px dashed var(--line);padding-top:14px}
 .ai-msgs{display:flex;flex-direction:column;gap:8px;margin:8px 0 10px;max-height:320px;overflow:auto}
 .ai-msg{max-width:88%;padding:8px 12px;border-radius:12px;font-size:13.5px;line-height:1.75;white-space:pre-wrap}
@@ -316,7 +323,7 @@ footer p{margin:4px 0}
 
 <header class="top">
   <div class="wrap">
-    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v35</span></div>
+    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v36</span></div>
     <nav class="nav"><a href="#cmp">逐段对照</a><a href="#how">换题怎么改</a></nav>
     <button class="print" type="button" id="mapBtn">考点分布</button>
     <button class="print" type="button" onclick="window.print()">打印</button>
@@ -438,6 +445,7 @@ footer p{margin:4px 0}
         <button class="btn primary" type="button" id="aiGo">开始批改</button>
         <button class="btn plain" type="button" id="aiClear">清空</button>
         <button class="btn plain" type="button" id="aiCfg">设置</button>
+        <button class="btn plain" type="button" id="aiHist">历史</button>
         <span class="ai-tip" id="aiState"></span>
       </div>
       <div class="ai-settings" id="aiSettings">
@@ -447,6 +455,7 @@ footer p{margin:4px 0}
         <input id="aiCode" placeholder="没有就留空">
         <div class="ai-row"><button class="btn sm plain" type="button" id="aiSave">保存</button></div>
       </div>
+      <div class="ai-histlist" id="aiHistList" hidden></div>
       <div class="ai-result" id="aiResult" hidden></div>
       <div class="ai-chat" id="aiChat" hidden>
         <p class="ai-h">继续追问</p>
@@ -2134,6 +2143,7 @@ panels.addEventListener('click', e => {
 
     goBtn.disabled = true; goBtn.textContent = '批改中…'; stateEl.textContent = '';
     resultEl.hidden = true;
+    histList.hidden = true;
     chatBox.hidden = true; chatCtx = null; chatHistory = []; msgsEl.innerHTML = '';
     try{
       const res = await fetch(endpoint, {
@@ -2153,6 +2163,16 @@ panels.addEventListener('click', e => {
       chatHistory = [];
       msgsEl.innerHTML = '';
       chatBox.hidden = false;
+      if (!data.mock){
+        saveRecord({
+          ts: Date.now(),
+          type: typeEl.value,
+          essayText: (data.transcript || essay || '').slice(0, 3000),
+          promptText: (data.prompt_transcript || '').slice(0, 1000),
+          snippet: (data.transcript || essay || '').replace(/\s+/g, ' ').slice(0, 60),
+          result: data
+        });
+      }
       stateEl.textContent = '';
     }catch(err){
       stateEl.textContent = '批改失败：' + err.message;
@@ -2206,6 +2226,94 @@ panels.addEventListener('click', e => {
   sendBtn.addEventListener('click', () => ask(qEl.value));
   qEl.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); ask(qEl.value); } });
   document.querySelectorAll('.ai-chipbtn').forEach(b => b.addEventListener('click', () => ask(b.textContent)));
+
+  /* ---------- 历史批改记录 ---------- */
+  const HIST_KEY = 'ai_history_v1';
+  const histList = document.getElementById('aiHistList');
+  const histBtn = document.getElementById('aiHist');
+
+  function loadRecords(){
+    try{ return JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); }catch(e){ return []; }
+  }
+  function saveRecords(arr){
+    try{ localStorage.setItem(HIST_KEY, JSON.stringify(arr.slice(0, 20))); }
+    catch(e){ try{ localStorage.setItem(HIST_KEY, JSON.stringify(arr.slice(0, 8))); }catch(e2){} }
+  }
+  function fmtTime(ts){
+    const d = new Date(ts);
+    const p = n => (n < 10 ? '0' + n : '' + n);
+    return (d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  function saveRecord(rec){
+    const arr = loadRecords();
+    arr.unshift(rec);
+    saveRecords(arr);
+  }
+  function renderHist(){
+    const arr = loadRecords();
+    let html = '<div class="ai-row" style="justify-content:space-between"><b style="font-size:13px">历史批改（只存在本机）</b><button class="btn sm plain" type="button" id="aiHistClear">清空全部</button></div>';
+    if (!arr.length){
+      html += '<p class="ai-tip">还没有记录，批改一篇后会自动保存。</p>';
+    } else {
+      html += arr.map((r, i) =>
+        `<div class="ai-histitem" data-i="${i}">
+          <span class="t">${fmtTime(r.ts)}</span>
+          <span class="s">${r.result && r.result.score != null ? r.result.score : '-'} 分</span>
+          <span class="b">${esc(r.result && r.result.band || '')}　${esc(String(r.snippet || '').slice(0, 26))}</span>
+          <button class="btn sm plain" type="button" data-del="${i}">删</button>
+        </div>`).join('');
+    }
+    histList.innerHTML = html;
+  }
+  function showRecord(rec){
+    if (!rec || !rec.result) return;
+    histList.hidden = true;
+    resultEl.hidden = false;
+    render(rec.result);
+    chatCtx = {
+      type: rec.type || 'big',
+      essayText: rec.essayText || '',
+      promptText: rec.promptText || '',
+      grade: { score: rec.result.score, band: rec.result.band,
+               issues: rec.result.issues || [], deductions: rec.result.deductions || [] }
+    };
+    chatHistory = [];
+    msgsEl.innerHTML = '';
+    chatBox.hidden = false;
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  histBtn.addEventListener('click', () => {
+    if (histList.hidden){
+      renderHist();
+      histList.hidden = false;
+      resultEl.hidden = true;
+      chatBox.hidden = true;
+    } else {
+      histList.hidden = true;
+    }
+  });
+
+  histList.addEventListener('click', e => {
+    const del = e.target.closest('[data-del]');
+    if (del){
+      e.stopPropagation();
+      const arr = loadRecords();
+      arr.splice(Number(del.dataset.del), 1);
+      saveRecords(arr);
+      renderHist();
+      return;
+    }
+    if (e.target.closest('#aiHistClear')){
+      if (confirm('清空全部批改记录？')){
+        saveRecords([]);
+        renderHist();
+      }
+      return;
+    }
+    const item = e.target.closest('.ai-histitem');
+    if (item) showRecord(loadRecords()[Number(item.dataset.i)]);
+  });
 
   goBtn.addEventListener('click', grade);
 
