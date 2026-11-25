@@ -352,7 +352,7 @@ footer p{margin:4px 0}
 
 <header class="top">
   <div class="wrap">
-    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v41</span></div>
+    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v42</span></div>
     <nav class="nav"><a href="#cmp">逐段对照</a><a href="#how">换题怎么改</a></nav>
     <button class="print" type="button" id="mapBtn">考点分布</button>
     <button class="print" type="button" onclick="window.print()">打印</button>
@@ -1585,7 +1585,7 @@ function wholeSheet(c){
   const closing = byName('落款');
   const sign = byName('署名');
 
-  const body = paras.map(p => `<p class="ind">${mark(txt(p))}${sayBtn(txt(p))}</p>`).join('');
+  const body = paras.map(p => `<p class="ind">${splitSent(txt(p)).map(x => mark(x) + sayBtn(x)).join(' ')}</p>`).join('');
   let inner = '';
 
   if (sal){
@@ -1628,6 +1628,31 @@ function sayBtn(text){
   const id = 'say' + (__sayId++);
   __SAY[id] = t;
   return ` <button class="sp" type="button" data-say="${id}" title="朗读这一句">🔊</button>`;
+}
+
+function splitSent(text){
+  const s = String(text || '');
+  const ABBR = /(?:^|\s)(?:Mr|Mrs|Ms|Dr|Prof|St|vs|etc|e\.g|i\.e|No|Fig|pp)\.$/i;
+  const out = [];
+  let buf = '', depth = 0;
+  for (let i = 0; i < s.length; i++){
+    const ch = s[i];
+    buf += ch;
+    if (ch === '{' && s[i + 1] === '{') depth++;
+    else if (ch === '}' && s[i + 1] === '}') depth = Math.max(0, depth - 1);
+    if (depth === 0 && (ch === '.' || ch === '!' || ch === '?' || ch === ';')){
+      const rest = s.slice(i + 1).replace(/^["')\]]*\s*/, '');
+      const next = rest[0] || '';
+      const isAbbr = ABBR.test(buf.trim());
+      if (!isAbbr && (!next || /[A-Z"“'(\[]/.test(next))){
+        while (i + 1 < s.length && s[i + 1] === ' ') { i++; buf += ' '; }
+        out.push(buf.trim());
+        buf = '';
+      }
+    }
+  }
+  if (buf.trim()) out.push(buf.trim());
+  return out.length ? out : [String(text || '')];
 }
 
 let __sayAudio = null;
@@ -1725,14 +1750,17 @@ function renderCase(c, i){
           <span class="ctag">模 板</span>
           ${p.tpl.map(l => {
             const m = l.match(/^([①②③AB])\|/);
-            if (!m) return '<p class="s">' + renderTpl(l) + sayBtn(l) + '</p>';
-            return '<p class="s"><span class="opt">' + m[1] + '</span>' + renderTpl(l.slice(2)) + sayBtn(l.slice(2)) + '</p>';
+            const body = m ? l.slice(2) : l;
+            const head = m ? '<span class="opt">' + m[1] + '</span>' : '';
+            return '<p class="s">' + head +
+              splitSent(body).map(x => renderTpl(x) + sayBtn(x)).join(' ') + '</p>';
           }).join('')}
           ${p.tplCn ? `<p class="cn">${plainCn(p.tplCn)}</p>` : ''}
         </div>
         ${c.tplOnly ? '' : `<div class="cell app">
           <span class="ctag">${c.appTag || '本题成文'}</span>
-          ${p.app.map(s => '<p class="s">' + renderApp(s) + sayBtn(s) + '</p>').join('')}
+          ${p.app.map(s => '<p class="s">' +
+            splitSent(s).map(x => renderApp(x) + sayBtn(x)).join(' ') + '</p>').join('')}
           ${p.appCn ? `<p class="cn">${plainCn(p.appCn)}</p>` : ''}
         </div>`}
       </div>
