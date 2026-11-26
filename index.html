@@ -365,7 +365,7 @@ footer p{margin:4px 0}
 
 <header class="top">
   <div class="wrap">
-    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v43</span></div>
+    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v44</span></div>
     <nav class="nav"><a href="#cmp">逐段对照</a><a href="#how">换题怎么改</a></nav>
     <button class="print" type="button" id="mapBtn">考点分布</button>
     <button class="print" type="button" onclick="window.print()">打印</button>
@@ -2246,6 +2246,10 @@ panels.addEventListener('click', e => {
     if (r.transcript) {
       html += '<details class="ai-tr"><summary>识别到的原文（点开核对，识别有误就改一下）</summary><pre>' +
               esc(r.transcript) + '</pre></details>';
+    }
+    if (r.deleted && r.deleted.length){
+      html += '<details class="ai-tr"><summary>已忽略的涂改（' + r.deleted.length +
+              ' 处，未计入评分）</summary><pre>' + esc(r.deleted.join('\n')) + '</pre></details>';
     }
 
     if (c){
