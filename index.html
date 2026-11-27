@@ -253,6 +253,9 @@ footer p{margin:4px 0}
 .ai-plan .you{color:var(--sub);font-family:Georgia,serif}
 .ai-plan .rev{font-family:Georgia,serif;font-weight:600}
 .ai-essay{margin:8px 0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff}
+.ai-cn-box{border-left:3px solid var(--green-soft);padding:6px 12px;margin:8px 0;color:var(--sub);font-size:13.5px;line-height:1.85}
+.ai-cn-box p{margin:0 0 8px}
+.ai-cn-box p:last-child{margin-bottom:0}
 .ai-essay .s{margin:0 0 8px}
 .ai-essay .s:last-child{margin-bottom:0}
 .ai-essay pre{white-space:pre-wrap;font:13.5px/1.8 Georgia,serif;margin:0;color:var(--ink)}
@@ -382,7 +385,7 @@ footer p{margin:4px 0}
 
 <header class="top">
   <div class="wrap">
-    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v48</span></div>
+    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v49</span></div>
     <nav class="nav"><a href="#cmp">逐段对照</a><a href="#how">换题怎么改</a></nav>
     <button class="print" type="button" id="mapBtn">考点分布</button>
     <button class="print" type="button" onclick="window.print()">打印</button>
@@ -2437,13 +2440,16 @@ panels.addEventListener('click', e => {
       const bodyHtml = paras.map(p =>
         '<p class="s">' + splitSent(p).map(x => linkWords(x) + sayBtn(x)).join(' ') + '</p>'
       ).join('');
-      html += '<p class="ai-h">按模板改写后的范文 <button class="btn sm plain ai-copy" type="button">复制</button></p>' +
+      html += '<p class="ai-h">按模板改写后的范文 <button class="btn sm plain ai-copy" type="button">复制</button>' +
+              ' <button class="btn sm plain ai-cn" type="button">显示中文</button></p>' +
               '<div class="ai-essay">' + bodyHtml + '</div>' +
+              '<div class="ai-cn-box" hidden></div>' +
               '<p class="ai-tip" style="margin-top:6px">范文里点任意单词可以查词义，句末 🔊 读整句</p>';
     }
 
     if (r.mock) html += '<p class="ai-tip" style="margin-top:12px">（当前是演示数据，后端接上 DeepSeek 后就是真实批改）</p>';
     resultEl.innerHTML = html;
+    resultEl.__essayText = r.revised_essay ? String(r.revised_essay) : '';
     resultEl.hidden = false;
   }
 
@@ -2738,6 +2744,49 @@ panels.addEventListener('click', e => {
       transState.textContent = '翻译失败：' + e.message;
     }
   }
+
+  async function translateText(text, dir){
+    const endpoint = (localStorage.getItem('ai_endpoint') || AI_DEFAULT_ENDPOINT || '').trim();
+    const code = (localStorage.getItem('ai_code') || AI_DEFAULT_CODE || '').trim();
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-access-code': code },
+      body: JSON.stringify({ mode: 'translate', text: text, direction: dir || 'en2zh' })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || ('接口返回 ' + res.status));
+    return data.text || '';
+  }
+
+  resultEl.addEventListener('click', async e => {
+    const btn = e.target.closest('.ai-cn');
+    if (!btn) return;
+    const box = resultEl.querySelector('.ai-cn-box');
+    if (!box) return;
+    if (box.dataset.done === '1'){
+      box.hidden = !box.hidden;
+      btn.textContent = box.hidden ? '显示中文' : '隐藏中文';
+      return;
+    }
+    const text = (resultEl.__essayText || '').trim();
+    if (!text) return;
+    btn.disabled = true;
+    btn.textContent = '翻译中…';
+    try{
+      const out = await translateText(text, 'en2zh');
+      box.innerHTML = out.split(/\n+/).filter(x => x.trim())
+        .map(p => '<p>' + esc(p.trim()) + '</p>').join('');
+      box.dataset.done = '1';
+      box.hidden = false;
+      btn.textContent = '隐藏中文';
+    }catch(err){
+      box.textContent = '翻译失败：' + err.message;
+      box.hidden = false;
+      btn.textContent = '显示中文';
+    }finally{
+      btn.disabled = false;
+    }
+  });
 
   document.getElementById('transGo').addEventListener('click', () => doTranslate('auto'));
   document.getElementById('transSwap').addEventListener('click', () => {
