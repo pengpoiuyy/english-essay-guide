@@ -201,7 +201,7 @@ details.plain p{font-family:Georgia,serif;font-size:15px;line-height:1.95;margin
 @media (max-width:560px){
   .map-panel{left:0;top:0;transform:none;width:100%;max-height:100vh;border-radius:0;padding:14px 16px 30px}
 }
-.pop{position:fixed;z-index:90;background:#1f261f;color:#fff;border-radius:10px;padding:9px 13px;
+.pop{position:fixed;z-index:170;background:#1f261f;color:#fff;border-radius:10px;padding:9px 13px;
   box-shadow:0 10px 30px -12px rgba(0,0,0,.55);max-width:280px;font-size:13px;line-height:1.5}
 .pop-top{display:flex;align-items:center;gap:8px}
 .pop-speak{border:0;background:rgba(255,255,255,.16);color:#fff;border-radius:8px;padding:2px 7px;
@@ -253,6 +253,8 @@ footer p{margin:4px 0}
 .ai-plan .you{color:var(--sub);font-family:Georgia,serif}
 .ai-plan .rev{font-family:Georgia,serif;font-weight:600}
 .ai-essay{margin:8px 0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff}
+.ai-essay .s{margin:0 0 8px}
+.ai-essay .s:last-child{margin-bottom:0}
 .ai-essay pre{white-space:pre-wrap;font:13.5px/1.8 Georgia,serif;margin:0;color:var(--ink)}
 .ai-photos{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 4px}
 .ai-photos figure{margin:0;text-align:center}
@@ -380,7 +382,7 @@ footer p{margin:4px 0}
 
 <header class="top">
   <div class="wrap">
-    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v47</span></div>
+    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v48</span></div>
     <nav class="nav"><a href="#cmp">逐段对照</a><a href="#how">换题怎么改</a></nav>
     <button class="print" type="button" id="mapBtn">考点分布</button>
     <button class="print" type="button" onclick="window.print()">打印</button>
@@ -2096,6 +2098,15 @@ document.getElementById('popSpeak').addEventListener('click', e => {
   speakWord(popB.textContent);
 });
 
+const aiResultEl = document.getElementById('aiResult');
+if (aiResultEl){
+  aiResultEl.addEventListener('click', e => {
+    const w = e.target.closest('.w');
+    if (w){ showPop(w); return; }
+    if (!e.target.closest('.pop')) closePop();
+  });
+}
+
 panels.addEventListener('click', e => {
   const w = e.target.closest('.w');
   if (w) { showPop(w); return; }
@@ -2421,8 +2432,14 @@ panels.addEventListener('click', e => {
     }
 
     if (r.revised_essay){
+      const raw = String(r.revised_essay).replace(/[<>]/g, '');
+      const paras = raw.split(/\n+/).map(s => s.trim()).filter(Boolean);
+      const bodyHtml = paras.map(p =>
+        '<p class="s">' + splitSent(p).map(x => linkWords(x) + sayBtn(x)).join(' ') + '</p>'
+      ).join('');
       html += '<p class="ai-h">按模板改写后的范文 <button class="btn sm plain ai-copy" type="button">复制</button></p>' +
-              '<div class="ai-essay"><pre>' + esc(r.revised_essay) + '</pre></div>';
+              '<div class="ai-essay">' + bodyHtml + '</div>' +
+              '<p class="ai-tip" style="margin-top:6px">范文里点任意单词可以查词义，句末 🔊 读整句</p>';
     }
 
     if (r.mock) html += '<p class="ai-tip" style="margin-top:12px">（当前是演示数据，后端接上 DeepSeek 后就是真实批改）</p>';
