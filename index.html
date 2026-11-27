@@ -385,7 +385,7 @@ footer p{margin:4px 0}
 
 <header class="top">
   <div class="wrap">
-    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v49</span></div>
+    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v50</span></div>
     <nav class="nav"><a href="#cmp">逐段对照</a><a href="#how">换题怎么改</a></nav>
     <button class="print" type="button" id="mapBtn">考点分布</button>
     <button class="print" type="button" onclick="window.print()">打印</button>
@@ -2745,6 +2745,37 @@ panels.addEventListener('click', e => {
     }
   }
 
+  function chunkText(text, max){
+    const paras = String(text || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
+    const chunks = [];
+    let cur = '';
+    const push = () => { if (cur.trim()) chunks.push(cur.trim()); cur = ''; };
+    for (const p of paras){
+      if (p.length > max){
+        push();
+        const sents = p.match(/[^.!?]+[.!?]?/g) || [p];
+        for (const s of sents){
+          const t = s.trim();
+          if (!t) continue;
+          if (t.length > max){
+            push();
+            for (let i = 0; i < t.length; i += max) chunks.push(t.slice(i, i + max));
+          } else if (cur.length + t.length > max){
+            push(); cur = t;
+          } else {
+            cur += (cur ? ' ' : '') + t;
+          }
+        }
+      } else if (cur.length + p.length > max){
+        push(); cur = p;
+      } else {
+        cur += (cur ? '\n' : '') + p;
+      }
+    }
+    push();
+    return chunks.length ? chunks : [String(text || '')];
+  }
+
   async function translateText(text, dir){
     const endpoint = (localStorage.getItem('ai_endpoint') || AI_DEFAULT_ENDPOINT || '').trim();
     const code = (localStorage.getItem('ai_code') || AI_DEFAULT_CODE || '').trim();
@@ -2771,10 +2802,16 @@ panels.addEventListener('click', e => {
     const text = (resultEl.__essayText || '').trim();
     if (!text) return;
     btn.disabled = true;
+    const chunks = chunkText(text, 900);
     btn.textContent = '翻译中…';
     try{
-      const out = await translateText(text, 'en2zh');
-      box.innerHTML = out.split(/\n+/).filter(x => x.trim())
+      const parts = [];
+      for (let i = 0; i < chunks.length; i++){
+        btn.textContent = '翻译中 ' + (i + 1) + '/' + chunks.length + '…';
+        const out = await translateText(chunks[i], 'en2zh');
+        if (out) parts.push(out.trim());
+      }
+      box.innerHTML = parts.join('\n').split(/\n+/).filter(x => x.trim())
         .map(p => '<p>' + esc(p.trim()) + '</p>').join('');
       box.dataset.done = '1';
       box.hidden = false;
