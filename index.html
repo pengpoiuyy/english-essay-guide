@@ -293,15 +293,21 @@ footer p{margin:4px 0}
 .sp:active{transform:scale(.92)}
 .sp:hover{opacity:1;color:var(--green)}
 .trans-mask{position:fixed;inset:0;z-index:150;background:rgba(16,22,16,.42);display:flex;align-items:flex-end;justify-content:center;padding:0}
-.trans-panel{width:min(620px,100%);max-height:86vh;overflow:auto;background:var(--paper);border:1px solid var(--line);
-  border-radius:18px 18px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -20px 60px -30px #000}
-@media (min-width:720px){
-  .trans-mask{align-items:center;padding:16px}
-  .trans-panel{border-radius:18px;padding:20px}
-}
-.trans-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.trans-head h3{margin:0;font-size:15.5px;font-family:"Songti SC","Noto Serif SC",Georgia,serif;flex:1}
-.trans-recent{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 2px}
+.trans-panel{width:min(680px,100%);max-height:88vh;overflow:auto;background:var(--paper);border:1px solid var(--line);
+  border-radius:20px 20px 0 0;padding:14px 14px calc(16px + env(safe-area-inset-bottom));box-shadow:0 -20px 60px -30px #000}
+@media (min-width:720px){.trans-mask{align-items:center;padding:16px}.trans-panel{border-radius:20px;padding:18px}}
+.trans-head{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.trans-head h3{margin:0;font-size:15.5px;font-family:"Songti SC","Noto Serif SC",Georgia,serif;margin-right:auto}
+.trans-badge{font-size:11px;color:var(--sub);border:1px solid var(--line);border-radius:999px;padding:2px 8px;white-space:nowrap}
+@media (max-width:400px){.trans-badge{display:none}}
+.trans-card{position:relative;border:1px solid var(--line);border-radius:14px;background:#fff;padding:12px 46px 12px 12px}
+.trans-card textarea{width:100%;min-height:66px;max-height:200px;border:0;outline:0;resize:none;background:transparent;
+  font:15px/1.7 inherit;color:var(--ink)}
+.trans-card.out{margin-top:10px;padding:14px 46px 14px 14px;background:#fdfdfb}
+.trans-out{font:16px/1.85 Georgia,"Songti SC",serif;white-space:pre-wrap;min-height:46px;color:var(--ink)}
+.trans-card .sp{position:absolute;right:10px;bottom:10px}
+.trans-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.trans-recent{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 2px}
 .trans-recent button{max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;
   border:1px solid var(--line);background:#fff;border-radius:999px;padding:3px 10px;color:var(--sub);cursor:pointer}
 .trans-recent button:hover{border-color:var(--green);color:var(--green)}
@@ -365,7 +371,7 @@ footer p{margin:4px 0}
 
 <header class="top">
   <div class="wrap">
-    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v45</span></div>
+    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v46</span></div>
     <nav class="nav"><a href="#cmp">逐段对照</a><a href="#how">换题怎么改</a></nav>
     <button class="print" type="button" id="mapBtn">考点分布</button>
     <button class="print" type="button" onclick="window.print()">打印</button>
@@ -463,19 +469,26 @@ footer p{margin:4px 0}
 <div class="trans-mask" id="transMask" hidden>
   <div class="trans-panel" role="dialog" aria-modal="true" aria-label="英汉互译">
     <div class="trans-head">
-      <h3>翻译 · 选中句子可直接译</h3>
-      <button class="btn plain sm" type="button" id="transClose">关闭</button>
+      <h3>翻译</h3>
+      <span class="trans-badge">自动识别中英</span>
+      <button class="btn plain sm" type="button" id="transSwap" title="把译文当原文再翻">⇄</button>
+      <button class="btn plain sm" type="button" id="transClose" aria-label="关闭">✕</button>
     </div>
-    <textarea id="transText" placeholder="粘贴或输入英文/中文；页面上选中一段文字，再点这里会自动带进来"></textarea>
+    <div class="trans-card">
+      <textarea id="transText" placeholder="输入或粘贴英文 / 中文…"></textarea>
+      <button class="sp" type="button" id="transSpeakSrc" title="读原文">🔊</button>
+    </div>
+    <div class="trans-card out">
+      <div class="trans-out" id="transOut">译文会显示在这里</div>
+      <button class="sp" type="button" id="transSpeakOut" title="读译文">🔊</button>
+    </div>
     <div class="trans-row">
       <button class="btn primary sm" type="button" id="transGo">翻译</button>
-      <button class="btn plain sm" type="button" id="transEn2zh">英 → 中</button>
-      <button class="btn plain sm" type="button" id="transZh2en">中 → 英</button>
-      <button class="btn plain sm" type="button" id="transCopy">复制</button>
+      <button class="btn plain sm" type="button" id="transCopy">复制译文</button>
+      <button class="btn plain sm" type="button" id="transClear">清空</button>
       <span class="ai-tip" id="transState"></span>
     </div>
     <div class="trans-recent" id="transRecent"></div>
-    <div class="trans-out" id="transOut">译文会显示在这里</div>
   </div>
 </div>
 <button class="sel-bubble" id="selBubble" type="button" hidden>译</button>
@@ -1684,21 +1697,22 @@ function __speakSystem(str){
     return true;
   }catch(e){ return false; }
 }
-async function __ttsSrc(s){
+async function __ttsSrc(s, lang){
   const endpoint = (localStorage.getItem('ai_endpoint') || window.__AI_EP || '').trim();
   const code = (localStorage.getItem('ai_code') || window.__AI_CODE || '').trim();
+  const l = lang || (/[\u4e00-\u9fa5]/.test(s) ? 'zh' : 'en');
   if (endpoint){
     try{
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-access-code': code },
-        body: JSON.stringify({ mode: 'tts', text: s })
+        body: JSON.stringify({ mode: 'tts', text: s, lang: l })
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.audio) return data.audio;
     }catch(e){}
   }
-  return 'https://fanyi.baidu.com/gettts?lan=en&spd=3&source=web&text=' + encodeURIComponent(s.slice(0, 200));
+  return 'https://fanyi.baidu.com/gettts?lan=' + l + '&spd=3&source=web&text=' + encodeURIComponent(s.slice(0, 200));
 }
 
 function __ensureAudio(){
@@ -1717,7 +1731,7 @@ async function __nextSay(){
   }
   const s = __sayQueue.shift();
   const a = __ensureAudio();
-  const src = await __ttsSrc(s);
+  const src = await __ttsSrc(s, __sayLang);
   a.onerror = () => { if (!__speakSystem(s)) setTimeout(__nextSay, 200); };
   try{
     a.src = src;
@@ -1727,10 +1741,12 @@ async function __nextSay(){
   }
 }
 let __sayDone = null;
-function speakSentence(text, onDone){
+let __sayLang = 'en';
+function speakSentence(text, onDone, lang){
   const t = String(text || '').replace(/\{\{|\}\}/g, '').trim();
   if (!t) return;
-  const parts = (t.match(/[^.!?;]+[.!?;]?/g) || [t]).map(x => x.trim()).filter(Boolean);
+  __sayLang = lang || (/[\u4e00-\u9fa5]/.test(t) ? 'zh' : 'en');
+  const parts = __sayLang === 'zh' ? [t] : (t.match(/[^.!?;]+[.!?;]?/g) || [t]).map(x => x.trim()).filter(Boolean);
   __sayQueue = parts;
   __sayDone = typeof onDone === 'function' ? onDone : null;
   __nextSay();
@@ -2647,20 +2663,21 @@ panels.addEventListener('click', e => {
   function renderRecent(){
     const arr = loadRecent();
     transRecent.innerHTML = arr.map(x =>
-      `<button type="button" data-src="${esc(x.src)}" title="${esc(x.out)}">${esc(x.src.slice(0, 18))}</button>`).join('');
+      `<button type="button" data-src="${esc(x.src)}" data-out="${esc(x.out)}" title="${esc(x.out)}">${esc(x.src.slice(0, 20))}</button>`).join('');
   }
   transRecent.addEventListener('click', e => {
     const b = e.target.closest('[data-src]');
     if (!b) return;
     transText.value = b.dataset.src;
-    doTranslate('auto');
+    transOut.textContent = b.dataset.out || '';
+    transState.textContent = '';
   });
 
   function openTrans(prefill){
     transMask.hidden = false;
     renderRecent();
-    if (prefill) transText.value = prefill;
-    setTimeout(() => { try{ transText.focus(); transText.setSelectionRange(transText.value.length, transText.value.length); }catch(e){} }, 60);
+    if (prefill){ transText.value = prefill; }
+    setTimeout(() => { try{ transText.focus(); }catch(e){} }, 60);
   }
   function closeTrans(){ transMask.hidden = true; }
 
@@ -2697,11 +2714,27 @@ panels.addEventListener('click', e => {
   }
 
   document.getElementById('transGo').addEventListener('click', () => doTranslate('auto'));
-  document.getElementById('transEn2zh').addEventListener('click', () => doTranslate('en2zh'));
-  document.getElementById('transZh2en').addEventListener('click', () => doTranslate('zh2en'));
+  document.getElementById('transSwap').addEventListener('click', () => {
+    const out = transOut.textContent.trim();
+    if (!out) return;
+    transText.value = out;
+    transOut.textContent = '';
+    doTranslate('auto');
+  });
+  document.getElementById('transClear').addEventListener('click', () => {
+    transText.value = ''; transOut.textContent = '译文会显示在这里'; transState.textContent = '';
+    transText.focus();
+  });
+  document.getElementById('transSpeakSrc').addEventListener('click', () => {
+    if (transText.value.trim()) speakSentence(transText.value);
+  });
+  document.getElementById('transSpeakOut').addEventListener('click', () => {
+    const t = transOut.textContent.trim();
+    if (t && t !== '译文会显示在这里') speakSentence(t);
+  });
   document.getElementById('transCopy').addEventListener('click', () => {
     const t = transOut.textContent.trim();
-    if (!t) return;
+    if (!t || t === '译文会显示在这里') return;
     if (navigator.clipboard && navigator.clipboard.writeText){
       navigator.clipboard.writeText(t).then(() => {
         transState.textContent = '已复制';
@@ -2712,6 +2745,7 @@ panels.addEventListener('click', e => {
   transText.addEventListener('keydown', e => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)){ e.preventDefault(); doTranslate('auto'); }
   });
+  transText.addEventListener('input', () => { transText.style.height = 'auto'; transText.style.height = Math.min(200, transText.scrollHeight) + 'px'; });
 
   /* 选中文字后冒出「译」按钮 */
   let selTimer = null;
@@ -2741,7 +2775,7 @@ panels.addEventListener('click', e => {
     if (sel) openTrans(sel);
   });
 
-  goBtn.addEventListener('click', grade);  goBtn.addEventListener('click', grade);
+  goBtn.addEventListener('click', grade);  goBtn.addEventListener('click', grade);  goBtn.addEventListener('click', grade);
 
   // 复制改写范文
   resultEl.addEventListener('click', e => {
