@@ -365,7 +365,7 @@ footer p{margin:4px 0}
 
 <header class="top">
   <div class="wrap">
-    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v44</span></div>
+    <div class="brand"><i>A</i>英语一 · 模板 × 真题<span class="ver">v45</span></div>
     <nav class="nav"><a href="#cmp">逐段对照</a><a href="#how">换题怎么改</a></nav>
     <button class="print" type="button" id="mapBtn">考点分布</button>
     <button class="print" type="button" onclick="window.print()">打印</button>
@@ -1902,9 +1902,68 @@ function closePop(){
   activeW = null;
 }
 
+const VOCAB_CACHE_KEY = 'vocab_cache_v1';
+function vocabCache(){
+  try{ return JSON.parse(localStorage.getItem(VOCAB_CACHE_KEY) || '{}'); }catch(e){ return {}; }
+}
+function cacheWord(w, obj){
+  const c = vocabCache();
+  c[w] = obj;
+  const ks = Object.keys(c);
+  if (ks.length > 800){ delete c[ks[0]]; }
+  try{ localStorage.setItem(VOCAB_CACHE_KEY, JSON.stringify(c)); }catch(e){}
+}
+function deriveBase(w){
+  const cands = [];
+  if (w.endsWith('ies')) cands.push(w.slice(0, -3) + 'y');
+  if (w.endsWith('es')) cands.push(w.slice(0, -2));
+  if (w.endsWith('s')) cands.push(w.slice(0, -1));
+  if (w.endsWith('ed')){ cands.push(w.slice(0, -2), w.slice(0, -1)); if (w.length > 5 && w[w.length - 3] === w[w.length - 4]) cands.push(w.slice(0, -3)); }
+  if (w.endsWith('ing')){ cands.push(w.slice(0, -3), w.slice(0, -3) + 'e'); if (w.length > 6 && w[w.length - 4] === w[w.length - 5]) cands.push(w.slice(0, -4)); }
+  if (w.endsWith('ly')) cands.push(w.slice(0, -2));
+  if (w.endsWith('ness')) cands.push(w.slice(0, -4));
+  if (w.endsWith('ment')) cands.push(w.slice(0, -4));
+  if (w.endsWith('ion')){ cands.push(w.slice(0, -3), w.slice(0, -3) + 'e'); }
+  for (const c of cands) if (c && c !== w && VOCAB[c]) return c;
+  return '';
+}
 function lookup(word){
   const w = word.toLowerCase().replace(/['’]s$/, '');
-  return VOCAB[w] || VOCAB[word.toLowerCase()] || null;
+  if (VOCAB[w]) return VOCAB[w];
+  const c = vocabCache()[w];
+  if (c && c.meaning) return (c.phonetic ? '/' + c.phonetic + '/ ' : '') + c.meaning;
+  const base = deriveBase(w);
+  if (base) return VOCAB[base] + '（' + w + ' 是 ' + base + ' 的变形）';
+  return null;
+}
+
+async function fetchWordRemote(word){
+  const w = word.toLowerCase().replace(/['’]s$/, '').replace(/[^a-z' -]/g, '');
+  if (!w) return;
+  const endpoint = (localStorage.getItem('ai_endpoint') || window.__AI_EP || '').trim();
+  const code = (localStorage.getItem('ai_code') || window.__AI_CODE || '').trim();
+  if (!endpoint){
+    if (popB.textContent.toLowerCase().indexOf(w) === 0) popS.textContent = '（暂未收录，联网后可查）';
+    return;
+  }
+  try{
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-access-code': code },
+      body: JSON.stringify({ mode: 'word', word: w })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.meaning) throw new Error(data.error || '没有释义');
+    cacheWord(w, { phonetic: data.phonetic || '', meaning: data.meaning });
+    if (popB.textContent.toLowerCase().replace(/['’]s$/, '') === w){
+      popS.textContent = data.meaning;
+      if (data.phonetic){ popI.textContent = '/' + data.phonetic + '/'; }
+    }
+  }catch(e){
+    if (popB.textContent.toLowerCase().replace(/['’]s$/, '') === w){
+      popS.textContent = '（暂未收录，检查网络或稍后再点）';
+    }
+  }
 }
 
 /* 朗读单词：页面内常驻 audio 播放真人发音，失败退回系统语音 */
@@ -1987,8 +2046,9 @@ function showPop(el){
   const word = el.textContent;
   const def = lookup(word);
   popB.textContent = word;
-  popS.textContent = def || '（暂未收录）';
+  popS.textContent = def || '查询中…';
   popI.textContent = '';
+  if (!def) fetchWordRemote(word);
   pop.hidden = false;
   speakWord(word);
 
